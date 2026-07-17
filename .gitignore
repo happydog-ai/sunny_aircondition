@@ -1,0 +1,23 @@
+# Build outputs
+DefaultBuild/
+*.obj
+*.abs
+*.map
+*.mot
+*.hex
+*.lst
+*.sub
+
+# Local/editor temporary files
+.codex_tmp/
+*.tmp
+*.bak
+
+# Generated local reports/docs
+SmartManual Docs/
+function.html
+macro.html
+QualityReport(*).txt
+
+# User-local CS+ settings
+*.user.mtud
