@@ -33,6 +33,7 @@ Includes
 #include "r_cg_timer.h"
 /* Start user code for include. Do not edit comment generated here */
 #include "bsp_soft_uart.h"
+#include "protocol.h"
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
 
@@ -61,7 +62,6 @@ Global variables and functions
  * Timer frequency    : 28800 Hz
  * Timer period       : approximately 34.722 us
  */
-
 /* End user code. Do not edit comment generated here */
 
 /***********************************************************************************************************************
@@ -74,20 +74,13 @@ static void __near r_tau0_channel0_interrupt(void)
 {
     /* Start user code. Do not edit comment generated here */
 
-    /*
-     * Toggle P77 LED.
-     */
-    if (P7_bit.no7 == 0U)
-    {
-        P7_bit.no7 = 1U;
-    }
-    else
-    {
-        P7_bit.no7 = 0U;
-    }
+    Protocol_TimerTick1ms();
 
     /* End user code. Do not edit comment generated here */
 }
 
 /* Start user code for adding. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
+
+
+

@@ -36,6 +36,8 @@
         <Path>BSP\bsp_rs485.h</Path>
         <Path>BSP\bsp_soft_uart.c</Path>
         <Path>BSP\bsp_soft_uart.h</Path>
+        <Path>protocol.c</Path>
+        <Path>protocol.h</Path>
       </Category>
     </Files>
     <DebugOptions>
@@ -64,6 +66,7 @@
           <Path>DefaultBuild\bsp_soft_uart.obj</Path>
           <Path>DefaultBuild\r_cg_serial.obj</Path>
           <Path>DefaultBuild\r_cg_serial_user.obj</Path>
+          <Path>DefaultBuild\protocol.obj</Path>
         </LinkOrder>
         <CommonOptions>
           <IncludePathForC>BSP</IncludePathForC>

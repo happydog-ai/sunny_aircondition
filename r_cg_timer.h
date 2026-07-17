@@ -394,7 +394,7 @@ Macro definitions (Register bit)
 Macro definitions
 ***********************************************************************************************************************/
 /* 16-bit timer data register 00 (TDR00) */
-#define _F423_TAU_TDR00_VALUE                   (0xF423U)
+#define _F423_TAU_TDR00_VALUE                   (0x003DU)
 /* Clock divisor for TAU0 channel 0 */
 #define _0200_TAU0_CHANNEL0_DIVISOR             (0x0200U)
 
@@ -412,3 +412,4 @@ void R_TAU0_Channel0_Stop(void);
 /* Start user code for function. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
 #endif
+
