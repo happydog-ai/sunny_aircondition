@@ -12,6 +12,11 @@ DefaultBuild/
 .codex_tmp/
 *.tmp
 *.bak
+*.zip
+__pycache__/
+*.pyc
+.venv/
+venv/
 
 # Generated local reports/docs
 SmartManual Docs/

@@ -1,0 +1,226 @@
+{
+  "poll_interval_ms": 500,
+  "coils": [
+    {
+      "name": "system_enable",
+      "label": "系统使能",
+      "address": 0,
+      "writable": true
+    },
+    {
+      "name": "fan_enable",
+      "label": "风机使能",
+      "address": 2,
+      "writable": true
+    },
+    {
+      "name": "fault_clear",
+      "label": "故障清除",
+      "address": 5,
+      "writable": true
+    },
+    {
+      "name": "eeprom_save",
+      "label": "参数保存",
+      "address": 6,
+      "writable": true
+    }
+  ],
+  "discrete_inputs": [
+    {
+      "name": "di1",
+      "label": "DI1状态",
+      "address": 0
+    },
+    {
+      "name": "di2",
+      "label": "DI2状态",
+      "address": 1
+    },
+    {
+      "name": "fan_fault",
+      "label": "风机故障",
+      "address": 17
+    },
+    {
+      "name": "eeprom_valid",
+      "label": "EEPROM数据有效",
+      "address": 20
+    },
+    {
+      "name": "total_fault",
+      "label": "总故障",
+      "address": 21
+    }
+  ],
+  "input_registers": [
+    {
+      "name": "adc0_raw",
+      "label": "ADC0原始值",
+      "address": 0
+    },
+    {
+      "name": "adc1_raw",
+      "label": "ADC1原始值",
+      "address": 1
+    },
+    {
+      "name": "adc2_raw",
+      "label": "ADC2原始值",
+      "address": 2
+    },
+    {
+      "name": "bus_voltage",
+      "label": "母线电压",
+      "address": 16,
+      "unit": "V",
+      "scale": 0.001
+    },
+    {
+      "name": "ambient_temp",
+      "label": "环境温度",
+      "address": 19,
+      "unit": "℃",
+      "scale": 0.1,
+      "signed": true
+    },
+    {
+      "name": "fan_rpm",
+      "label": "风机转速",
+      "address": 32,
+      "unit": "rpm"
+    },
+    {
+      "name": "fault_code",
+      "label": "故障码",
+      "address": 49
+    },
+    {
+      "name": "uart_error_count",
+      "label": "UART错误计数",
+      "address": 50
+    },
+    {
+      "name": "crc_error_count",
+      "label": "CRC错误计数",
+      "address": 51
+    }
+  ],
+  "holding_registers": [
+    {
+      "name": "control_mode",
+      "label": "控制模式",
+      "address": 0,
+      "writable": true,
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "name": "target_temp",
+      "label": "设定温度",
+      "address": 1,
+      "unit": "℃",
+      "scale": 0.1,
+      "signed": true,
+      "writable": true,
+      "minimum": -40,
+      "maximum": 100
+    },
+    {
+      "name": "fan_level",
+      "label": "风机档位",
+      "address": 2,
+      "writable": true,
+      "minimum": 0,
+      "maximum": 3
+    },
+    {
+      "name": "fan_pwm",
+      "label": "风机PWM",
+      "address": 3,
+      "unit": "‰",
+      "writable": true,
+      "minimum": 0,
+      "maximum": 1000
+    },
+    {
+      "name": "adc_filter_depth",
+      "label": "ADC滤波深度",
+      "address": 16,
+      "writable": true,
+      "minimum": 1,
+      "maximum": 64
+    },
+    {
+      "name": "over_voltage",
+      "label": "过压阈值",
+      "address": 17,
+      "unit": "V",
+      "scale": 0.001,
+      "writable": true,
+      "minimum": 0,
+      "maximum": 65.535
+    },
+    {
+      "name": "under_voltage",
+      "label": "欠压阈值",
+      "address": 18,
+      "unit": "V",
+      "scale": 0.001,
+      "writable": true,
+      "minimum": 0,
+      "maximum": 65.535
+    },
+    {
+      "name": "over_temp",
+      "label": "过温阈值",
+      "address": 19,
+      "unit": "℃",
+      "scale": 0.1,
+      "signed": true,
+      "writable": true,
+      "minimum": -40,
+      "maximum": 150
+    },
+    {
+      "name": "slave_address",
+      "label": "从机地址",
+      "address": 32,
+      "writable": true,
+      "minimum": 1,
+      "maximum": 247
+    },
+    {
+      "name": "baudrate_code",
+      "label": "波特率编码",
+      "address": 33,
+      "writable": true,
+      "minimum": 0,
+      "maximum": 5
+    },
+    {
+      "name": "parity_mode",
+      "label": "校验模式",
+      "address": 34,
+      "writable": true,
+      "minimum": 0,
+      "maximum": 2
+    },
+    {
+      "name": "software_major",
+      "label": "软件主版本",
+      "address": 48,
+      "writable": false,
+      "minimum": 0,
+      "maximum": 255
+    },
+    {
+      "name": "software_minor",
+      "label": "软件次版本",
+      "address": 49,
+      "writable": false,
+      "minimum": 0,
+      "maximum": 255
+    }
+  ]
+}
