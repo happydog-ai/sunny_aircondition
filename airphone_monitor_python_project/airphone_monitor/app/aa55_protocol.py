@@ -84,12 +84,12 @@ class AA55Protocol:
         return self.transact(CMD_ECHO, data).data
 
     def set_led(self, enabled: bool) -> bool:
-        data = self.transact(CMD_LED_SET, bytes((1 if enabled else 0,))).data
-        return bool(data[0]) if data else enabled
+        data = self.transact(CMD_LED_SET, bytes((0 if enabled else 1,))).data
+        return data[0] == 0 if data else enabled
 
     def get_status(self) -> dict[str, int | bool]:
         data = self.transact(CMD_GET_STATUS).data
-        result: dict[str, int | bool] = {"led": bool(data[0]) if data else False}
+        result: dict[str, int | bool] = {"led": data[0] == 0 if data else False}
         if len(data) >= 2:
             result["rx_overflow"] = bool(data[1])
         if len(data) >= 3:

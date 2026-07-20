@@ -93,18 +93,26 @@ class SerialWorker(QThread):
 
     def _handle(self, action: str, p: dict[str, Any]) -> None:
         if action == "connect":
-            self._transport.open(str(p["port"]), int(p["baudrate"]),
-                                 str(p["parity"]), 1, float(p.get("timeout", 0.3)))
-            address = int(p["address"])
-            if p["protocol"] == "AA55":
-                self._protocol = AA55Protocol(self._transport, address, float(p.get("timeout", 0.3)))
-                info = {"port": p["port"], "protocol": "AA55", "version": self._protocol.get_version()}
-            else:
-                self._protocol = ModbusRTU(self._transport, address, float(p.get("timeout", 0.3)))
-                info = {"port": p["port"], "protocol": "MODBUS"}
-            self._connected = True
-            self._next_poll = 0.0
-            self.connected.emit(info)
+            try:
+                self._transport.open(str(p["port"]), int(p["baudrate"]),
+                                     str(p["parity"]), 1, float(p.get("timeout", 0.3)))
+                address = int(p["address"])
+                if p["protocol"] == "AA55":
+                    self._protocol = AA55Protocol(self._transport, address, float(p.get("timeout", 0.3)))
+                    try:
+                        version = self._protocol.get_version()
+                    except Exception:
+                        version = None
+                    info = {"port": p["port"], "protocol": "AA55", "version": version}
+                else:
+                    self._protocol = ModbusRTU(self._transport, address, float(p.get("timeout", 0.3)))
+                    info = {"port": p["port"], "protocol": "MODBUS"}
+                self._connected = True
+                self._next_poll = 0.0
+                self.connected.emit(info)
+            except Exception as exc:
+                self.communication_error.emit(f"连接失败：{exc}")
+                self.command_finished.emit("_connect_failed", {})
         elif action == "disconnect":
             self._transport.close()
             self._protocol = None

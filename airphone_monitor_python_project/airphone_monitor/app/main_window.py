@@ -147,7 +147,10 @@ class MainWindow(QMainWindow):
         self.connect_button.setEnabled(False); self.worker.submit("connect", port=port, baudrate=int(self.baud_combo.currentText()), parity=self.parity_combo.currentData(), address=self.address_spin.value(), protocol=self.protocol_combo.currentData(), timeout=0.3)
 
     def on_connected(self, info: dict) -> None:
-        self.connected = True; self._set_connected(True); extra = f"，版本{info['version']}" if "version" in info else ""; self.statusBar().showMessage(f"已连接{info['port']}，协议{info['protocol']}{extra}")
+        self.connected = True; self._set_connected(True)
+        ver = info.get("version")
+        extra = f"，版本{ver}" if ver else ""; self.statusBar().showMessage(f"已连接{info['port']}，协议{info['protocol']}{extra}")
+        self.connection_status_label.setText("连接状态：已连接")
 
     def on_disconnected(self) -> None:
         self.connected = False; self._set_connected(False); self.statusBar().showMessage("已断开")
@@ -176,6 +179,9 @@ class MainWindow(QMainWindow):
         if self.logger.active: self.logger.write(self.last_state)
 
     def on_command(self, name: str, result) -> None:
+        if name == "_connect_failed":
+            self.connect_button.setEnabled(True)
+            return
         if isinstance(result, dict):
             self._handle_aa55_result(name, result)
         else:
