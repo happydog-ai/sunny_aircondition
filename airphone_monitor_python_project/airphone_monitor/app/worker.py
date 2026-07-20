@@ -155,6 +155,86 @@ class SerialWorker(QThread):
                 self._aa55_command("get_version", protocol.get_version)
             else:
                 raise RuntimeError("获取版本仅适用于AA55协议")
+        elif action == "store_config":
+            protocol = self._require()
+            if isinstance(protocol, AA55Protocol):
+                self._aa55_command("store_config", protocol.store_config)
+            else:
+                t0 = time.monotonic()
+                try:
+                    protocol.write_single_coil(6, True)
+                    elapsed = (time.monotonic() - t0) * 1000
+                    self.command_finished.emit("store_config", {"success": True, "data": {"saved": True}, "elapsed_ms": elapsed})
+                except Exception as exc:
+                    elapsed = (time.monotonic() - t0) * 1000
+                    self.command_finished.emit("store_config", {"success": False, "error": str(exc), "elapsed_ms": elapsed})
+                self._next_poll = 0.0
+        elif action == "eeprom_test_write_save":
+            protocol = self._require_modbus()
+            address = int(p.get("address", 3))
+            value = int(p.get("value", 600))
+            t0 = time.monotonic()
+            try:
+                protocol.write_single_register(address, value)
+                readback = protocol.read_holding_registers(address, 1)[0]
+                protocol.write_single_coil(6, True)
+                elapsed = (time.monotonic() - t0) * 1000
+                self.command_finished.emit("eeprom_test_write_save", {
+                    "success": True,
+                    "address": address,
+                    "value": value,
+                    "readback": readback,
+                    "saved": True,
+                    "elapsed_ms": elapsed,
+                })
+            except Exception as exc:
+                elapsed = (time.monotonic() - t0) * 1000
+                self.command_finished.emit("eeprom_test_write_save", {
+                    "success": False,
+                    "error": str(exc),
+                    "elapsed_ms": elapsed,
+                })
+            self._next_poll = 0.0
+        elif action == "eeprom_verify":
+            protocol = self._require_modbus()
+            address = int(p.get("address", 3))
+            expected = int(p.get("expected", 600))
+            t0 = time.monotonic()
+            try:
+                value = protocol.read_holding_registers(address, 1)[0]
+                elapsed = (time.monotonic() - t0) * 1000
+                self.command_finished.emit("eeprom_verify", {
+                    "success": value == expected,
+                    "address": address,
+                    "expected": expected,
+                    "value": value,
+                    "elapsed_ms": elapsed,
+                })
+            except Exception as exc:
+                elapsed = (time.monotonic() - t0) * 1000
+                self.command_finished.emit("eeprom_verify", {
+                    "success": False,
+                    "error": str(exc),
+                    "elapsed_ms": elapsed,
+                })
+        elif action == "load_config":
+            protocol = self._require()
+            if isinstance(protocol, AA55Protocol):
+                self._aa55_command("load_config", protocol.load_config)
+            else:
+                raise RuntimeError("加载配置仅适用于AA55协议")
+        elif action == "restore_defaults":
+            protocol = self._require()
+            if isinstance(protocol, AA55Protocol):
+                self._aa55_command("restore_defaults", protocol.restore_defaults)
+            else:
+                raise RuntimeError("恢复默认仅适用于AA55协议")
+        elif action == "get_config_status":
+            protocol = self._require()
+            if isinstance(protocol, AA55Protocol):
+                self._aa55_command("get_config_status", protocol.get_config_status)
+            else:
+                raise RuntimeError("查询存储状态仅适用于AA55协议")
 
     def _require(self) -> AA55Protocol | ModbusRTU:
         if not self._connected or self._protocol is None:
@@ -172,6 +252,25 @@ class SerialWorker(QThread):
         if isinstance(protocol, AA55Protocol):
             state = protocol.get_status()
             state["protocol"] = "AA55"
+            try:
+                config_data = protocol.get_config_data()
+                idx_to_addr = {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:16, 7:17, 8:18, 9:19, 10:32, 11:33, 12:34}
+                items = self._map.items("holding_registers")
+                item_map = {it.address: it for it in items}
+                item_map[0] = next((it for it in self._map.items("coils") if it.address == 0), None) or item_map.get(0)
+
+                for idx, reg_addr in idx_to_addr.items():
+                    if idx < len(config_data):
+                        raw = config_data[idx]
+                        it = item_map.get(reg_addr)
+                        if it is not None:
+                            val = bool(raw) if reg_addr == 0 else it.decode(raw)
+                            state[it.name] = val
+
+                for it in self._map.items("input_registers"):
+                    state[it.name] = it.decode(0)
+            except Exception:
+                pass
         else:
             state: dict[str, Any] = {"protocol": "MODBUS"}
             readers = {
@@ -182,10 +281,13 @@ class SerialWorker(QThread):
             }
             for group, reader in readers.items():
                 items = self._map.items(group)
-                span = self._map.span(items)
-                if span:
-                    start, count = span
-                    state.update(self._map.decode_group(group, start, reader(start, count)))
+                for start, count in self._map.spans(items):
+                    block_items = [i for i in items if start <= i.address < start + count]
+                    if block_items:
+                        data = reader(start, count)
+                        state.update(self._map.decode_group(group, start, data, block_items))
+            if "system_enable" in state:
+                state["led"] = bool(state["system_enable"])
         self._stats["polls"] += 1
         self.statistics_updated.emit(dict(self._stats))
         self.status_updated.emit(state)

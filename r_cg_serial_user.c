@@ -23,7 +23,7 @@
 * Device(s)    : R5F100LG
 * Tool-Chain   : CCRL
 * Description  : This file implements device driver for Serial module.
-* Creation Date: 2026/7/17
+* Creation Date: 2026/7/20
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -33,6 +33,8 @@ Includes
 #include "r_cg_serial.h"
 /* Start user code for include. Do not edit comment generated here */
 #include "bsp_rs485.h"
+#include "bsp_soft_uart.h"
+#include "bsp_bl24c16.h"
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
 
@@ -41,6 +43,7 @@ Pragma directive
 ***********************************************************************************************************************/
 #pragma interrupt r_uart1_interrupt_send(vect=INTST1)
 #pragma interrupt r_uart1_interrupt_receive(vect=INTSR1)
+#pragma interrupt r_iica0_interrupt(vect=INTIICA0)
 /* Start user code for pragma. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
 
@@ -52,6 +55,13 @@ extern volatile uint16_t  g_uart1_tx_count;            /* uart1 send data number
 extern volatile uint8_t * gp_uart1_rx_address;         /* uart1 receive buffer address */
 extern volatile uint16_t  g_uart1_rx_count;            /* uart1 receive data number */
 extern volatile uint16_t  g_uart1_rx_length;           /* uart1 receive data length */
+extern volatile uint8_t   g_iica0_master_status_flag;  /* iica0 master flag */ 
+extern volatile uint8_t   g_iica0_slave_status_flag;   /* iica0 slave flag */
+extern volatile uint8_t * gp_iica0_rx_address;         /* iica0 receive buffer address */
+extern volatile uint16_t  g_iica0_rx_cnt;              /* iica0 receive data length */
+extern volatile uint16_t  g_iica0_rx_len;              /* iica0 receive data count */
+extern volatile uint8_t * gp_iica0_tx_address;         /* iica0 send buffer address */
+extern volatile uint16_t  g_iica0_tx_cnt;              /* iica0 send data count */
 /* Start user code for global. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
 
@@ -164,6 +174,160 @@ static void r_uart1_callback_error(uint8_t err_type)
 {
     /* Start user code. Do not edit comment generated here */
     BSP_RS485_UART1ErrorCallback(err_type);
+    /* End user code. Do not edit comment generated here */
+}
+
+/***********************************************************************************************************************
+* Function Name: r_iica0_interrupt
+* Description  : This function is INTIICA0 interrupt service routine.
+* Arguments    : None
+* Return Value : None
+***********************************************************************************************************************/
+static void __near r_iica0_interrupt(void)
+{
+    if ((IICS0 & _80_IICA_STATUS_MASTER) == 0x80U)
+    {
+        iica0_master_handler();
+    }
+}
+
+/***********************************************************************************************************************
+* Function Name: iica0_master_handler
+* Description  : This function is IICA0 master handler.
+* Arguments    : None
+* Return Value : None
+***********************************************************************************************************************/
+static void iica0_master_handler(void)
+{
+    /* Detection of stop condition handling */
+    if ((0U == IICBSY0) && (g_iica0_tx_cnt != 0U))
+    {
+        r_iica0_callback_master_error(MD_SPT);
+    }
+    else
+    {
+        /* Control for sended address */
+        if ((g_iica0_master_status_flag & _80_IICA_ADDRESS_COMPLETE) == 0U)
+        {
+            if (1U == ACKD0)
+            {
+                g_iica0_master_status_flag |= _80_IICA_ADDRESS_COMPLETE;
+                
+                if (1U == TRC0)
+                {
+                    WTIM0 = 1U;
+                    
+                    if (g_iica0_tx_cnt > 0U)
+                    {
+                        IICA0 = *gp_iica0_tx_address;
+                        gp_iica0_tx_address++;
+                        g_iica0_tx_cnt--;
+                    }
+                    else
+                    {
+                        r_iica0_callback_master_sendend();
+                    }
+                }
+                else
+                {
+                    ACKE0 = 1U;
+                    WTIM0 = 0U;
+                    WREL0 = 1U;
+                }
+            }
+            else
+            {
+                r_iica0_callback_master_error(MD_NACK);
+            }
+        }
+        else
+        {
+            /* Master send control */
+            if (1U == TRC0)
+            {
+                if ((0U == ACKD0) && (g_iica0_tx_cnt != 0U))
+                {
+                    r_iica0_callback_master_error(MD_NACK);
+                }
+                else
+                {
+                    if (g_iica0_tx_cnt > 0U)
+                    {
+                        IICA0 = *gp_iica0_tx_address;
+                        gp_iica0_tx_address++;
+                        g_iica0_tx_cnt--;
+                    }
+                    else
+                    {
+                        r_iica0_callback_master_sendend();
+                    }
+                }
+            }
+            /* Master receive control */
+            else
+            {
+                if (g_iica0_rx_cnt < g_iica0_rx_len)
+                {
+                    *gp_iica0_rx_address = IICA0;
+                    gp_iica0_rx_address++;
+                    g_iica0_rx_cnt++;
+                    
+                    if (g_iica0_rx_cnt == g_iica0_rx_len)
+                    {
+                        ACKE0 = 0U;
+                        WTIM0 = 1U;
+                        WREL0 = 1U;
+                    }
+                    else
+                    {
+                        WREL0 = 1U;
+                    }
+                }
+                else
+                {
+                    r_iica0_callback_master_receiveend();
+                }
+            }
+        }
+    }
+}
+
+/***********************************************************************************************************************
+* Function Name: r_iica0_callback_master_error
+* Description  : This function is a callback function when IICA0 master error occurs.
+* Arguments    : None
+* Return Value : None
+***********************************************************************************************************************/
+static void r_iica0_callback_master_error(MD_STATUS flag)
+{
+    /* Start user code. Do not edit comment generated here */
+    BSP_I2C_CallbackErrorCode((uint8_t)flag);
+    /* End user code. Do not edit comment generated here */
+}
+
+/***********************************************************************************************************************
+* Function Name: r_iica0_callback_master_receiveend
+* Description  : This function is a callback function when IICA0 finishes master reception.
+* Arguments    : None
+* Return Value : None
+***********************************************************************************************************************/
+static void r_iica0_callback_master_receiveend(void)
+{
+    /* Start user code. Do not edit comment generated here */
+    BSP_I2C_CallbackRecvEnd();
+    /* End user code. Do not edit comment generated here */
+}
+
+/***********************************************************************************************************************
+* Function Name: r_iica0_callback_master_sendend
+* Description  : This function is a callback function when IICA0 finishes master transmission.
+* Arguments    : None
+* Return Value : None
+***********************************************************************************************************************/
+static void r_iica0_callback_master_sendend(void)
+{
+    /* Start user code. Do not edit comment generated here */
+    BSP_I2C_CallbackSendEnd();
     /* End user code. Do not edit comment generated here */
 }
 

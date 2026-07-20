@@ -23,7 +23,7 @@
 * Device(s)    : R5F100LG
 * Tool-Chain   : CCRL
 * Description  : This file implements device driver for TAU module.
-* Creation Date: 2026/7/17
+* Creation Date: 2026/7/20
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -34,6 +34,8 @@ Includes
 /* Start user code for include. Do not edit comment generated here */
 #include "bsp_soft_uart.h"
 #include "protocol.h"
+#include "modbus_protocol.h"
+#include "app_config.h"
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
 
@@ -75,12 +77,11 @@ static void __near r_tau0_channel0_interrupt(void)
     /* Start user code. Do not edit comment generated here */
 
     Protocol_TimerTick1ms();
+    ModbusProtocol_TimerTick1ms();
+    AppConfig_TimerTick1ms();
 
     /* End user code. Do not edit comment generated here */
 }
 
 /* Start user code for adding. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
-
-
-

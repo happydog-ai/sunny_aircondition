@@ -84,14 +84,17 @@ class MainWindow(QMainWindow):
         coil_box = QGroupBox("Modbus开关量"); grid = QGridLayout(coil_box); self.coil_checks = {}
         definitions = [("系统使能", "system_enable", 0), ("风机使能", "fan_enable", 2)]
         for row, (title, name, address) in enumerate(definitions):
-            check = QCheckBox(title); button = QPushButton("写入"); button.clicked.connect(lambda _=False, a=address, c=check: self.worker.submit("write_coil", address=a, enabled=c.isChecked()))
+            check = QCheckBox(title); button = QPushButton("写入"); button.clicked.connect(lambda _=False, a=address, c=check: self._safe_submit("write_coil", address=a, enabled=c.isChecked()))
             self.coil_checks[name] = check; grid.addWidget(check, row, 0); grid.addWidget(QLabel(f"0x{address:04X}"), row, 1); grid.addWidget(button, row, 2)
         aa_box = QGroupBox("AA55协议调试"); aa_layout = QVBoxLayout(aa_box)
         btn_row = QHBoxLayout()
         self.ping_button = QPushButton("测试连接"); self.ping_button.clicked.connect(self._on_ping)
         self.version_button = QPushButton("获取版本号"); self.version_button.clicked.connect(self._on_get_version)
         self.led_button = QPushButton("打开LED"); self.led_button.clicked.connect(self._on_toggle_led)
-        btn_row.addWidget(self.ping_button); btn_row.addWidget(self.version_button); btn_row.addWidget(self.led_button); btn_row.addStretch()
+        self.store_cfg_button = QPushButton("保存配置"); self.store_cfg_button.clicked.connect(lambda: self._safe_submit("store_config"))
+        self.load_cfg_button = QPushButton("加载配置"); self.load_cfg_button.clicked.connect(lambda: self._safe_submit("load_config"))
+        self.defaults_button = QPushButton("恢复默认"); self.defaults_button.clicked.connect(lambda: self._safe_submit("restore_defaults"))
+        btn_row.addWidget(self.ping_button); btn_row.addWidget(self.version_button); btn_row.addWidget(self.led_button); btn_row.addWidget(self.store_cfg_button); btn_row.addWidget(self.load_cfg_button); btn_row.addWidget(self.defaults_button); btn_row.addStretch()
         aa_layout.addLayout(btn_row)
         status_row = QHBoxLayout()
         self.connection_status_label = QLabel("连接状态：未测试")
@@ -101,7 +104,7 @@ class MainWindow(QMainWindow):
         aa_layout.addLayout(status_row)
         reg_box = QGroupBox("执行器参数（Modbus保持寄存器）"); form = QFormLayout(reg_box)
         for title, address, maximum in (("风机PWM（‰）", 3, 1000),):
-            row = QWidget(); h = QHBoxLayout(row); h.setContentsMargins(0, 0, 0, 0); spin = QSpinBox(); spin.setRange(0, maximum); button = QPushButton("写入"); button.clicked.connect(lambda _=False, a=address, s=spin: self.worker.submit("write_register", address=a, value=s.value())); h.addWidget(spin); h.addWidget(button); form.addRow(title, row)
+            row = QWidget(); h = QHBoxLayout(row); h.setContentsMargins(0, 0, 0, 0); spin = QSpinBox(); spin.setRange(0, maximum); button = QPushButton("写入"); button.clicked.connect(lambda _=False, a=address, s=spin: self._safe_submit("write_register", address=a, value=s.value())); h.addWidget(spin); h.addWidget(button); form.addRow(title, row)
         layout.addWidget(coil_box); layout.addWidget(aa_box); layout.addWidget(reg_box); layout.addStretch(); return page
 
     def _parameters(self) -> QWidget:
@@ -112,13 +115,38 @@ class MainWindow(QMainWindow):
             self.param_rows[item.name] = row; self.param_table.setItem(row, 0, QTableWidgetItem(item.label)); self.param_table.setItem(row, 1, QTableWidgetItem(f"0x{item.address:04X}")); self.param_table.setItem(row, 2, QTableWidgetItem("--")); self.param_table.setItem(row, 3, QTableWidgetItem(item.unit))
             edit = QDoubleSpinBox(); edit.setDecimals(3); edit.setRange(item.minimum if item.minimum is not None else -65535, item.maximum if item.maximum is not None else 65535); self.param_table.setCellWidget(row, 4, edit)
             self.param_table.setItem(row, 5, QTableWidgetItem(f"{item.minimum}～{item.maximum}")); button = QPushButton("写入"); button.setEnabled(item.writable); button.clicked.connect(lambda _=False, it=item, ed=edit: self._write_mapped(it, ed)); self.param_table.setCellWidget(row, 6, button)
-        save = QPushButton("保存参数到EEPROM"); save.clicked.connect(lambda: self.worker.submit("write_coil", address=6, enabled=True)); layout.addWidget(self.param_table); layout.addWidget(save); return page
+        save = QPushButton("保存参数到EEPROM"); save.clicked.connect(lambda: self._safe_submit("store_config"))
+        test_box = QGroupBox("EEPROM持久化测试")
+        test_layout = QHBoxLayout(test_box)
+        self.eeprom_test_value = QSpinBox()
+        self.eeprom_test_value.setRange(0, 1000)
+        self.eeprom_test_value.setValue(600)
+        self.eeprom_write_save_button = QPushButton("写寄存器3并保存")
+        self.eeprom_write_save_button.clicked.connect(
+            lambda: self._safe_submit("eeprom_test_write_save", address=3, value=self.eeprom_test_value.value())
+        )
+
+        self.eeprom_verify_button = QPushButton("重启后验证寄存器3")
+        self.eeprom_verify_button.clicked.connect(
+            lambda: self._safe_submit("eeprom_verify", address=3, expected=self.eeprom_test_value.value())
+        )
+        self.eeprom_status_label = QLabel("EEPROM测试：未执行")
+        test_layout.addWidget(QLabel("测试值"))
+        test_layout.addWidget(self.eeprom_test_value)
+        test_layout.addWidget(self.eeprom_write_save_button)
+        test_layout.addWidget(self.eeprom_verify_button)
+        test_layout.addWidget(self.eeprom_status_label)
+        test_layout.addStretch()
+        layout.addWidget(self.param_table)
+        layout.addWidget(save)
+        layout.addWidget(test_box)
+        return page
 
     def _manual(self) -> QWidget:
         page = QWidget(); form = QFormLayout(page)
         self.manual_op = QComboBox(); self.manual_op.addItems(["PING", "GET_VERSION", "ECHO", "GET_STATUS", "01 读线圈", "02 读离散输入", "03 读保持寄存器", "04 读输入寄存器", "05 写单线圈", "06 写单寄存器", "10 写多个寄存器"])
         self.manual_addr = QSpinBox(); self.manual_addr.setRange(0, 65535); self.manual_count = QSpinBox(); self.manual_count.setRange(1, 125); self.manual_data = QLineEdit(); self.manual_data.setPlaceholderText("ECHO填HEX；写寄存器填数值或逗号分隔列表")
-        button = QPushButton("执行"); button.clicked.connect(lambda: self.worker.submit("manual", operation=self.manual_op.currentText(), address=self.manual_addr.value(), count=self.manual_count.value(), data=self.manual_data.text()))
+        button = QPushButton("执行"); button.clicked.connect(lambda: self._safe_submit("manual", operation=self.manual_op.currentText(), address=self.manual_addr.value(), count=self.manual_count.value(), data=self.manual_data.text()))
         self.manual_result = QPlainTextEdit(); self.manual_result.setReadOnly(True)
         form.addRow("功能", self.manual_op); form.addRow("地址", self.manual_addr); form.addRow("数量", self.manual_count); form.addRow("数据", self.manual_data); form.addRow(button); form.addRow("结果", self.manual_result); return page
 
@@ -182,6 +210,17 @@ class MainWindow(QMainWindow):
         if name == "_connect_failed":
             self.connect_button.setEnabled(True)
             return
+        if name in ("eeprom_test_write_save", "eeprom_verify"):
+            self._handle_eeprom_result(name, result)
+            return
+        if name == "set_led" and not isinstance(result, dict):
+            self.led_button.setEnabled(True)
+            self.led_running = False
+            self.led_state = bool(result)
+            self.led_button.setText("关闭LED" if self.led_state else "打开LED")
+            self.led_status_label.setText(f"LED状态：{'已打开' if self.led_state else '已关闭'}")
+            self.statusBar().showMessage(f"LED{'打开' if self.led_state else '关闭'}成功", 5000)
+            return
         if isinstance(result, dict):
             self._handle_aa55_result(name, result)
         else:
@@ -198,15 +237,28 @@ class MainWindow(QMainWindow):
     def on_stats(self, s: dict) -> None:
         self.stats.setText(f"TX {s['tx_frames']} | RX {s['rx_frames']} | 错误 {s['errors']} | 轮询 {s['polls']}")
 
+    def _require_connected(self) -> bool:
+        if not self.connected:
+            QMessageBox.warning(self, "提示", "请先打开串口连接设备")
+            return False
+        return True
+
+    def _safe_submit(self, action, **payload):
+        if self._require_connected():
+            self.worker.submit(action, **payload)
+
     def _on_ping(self) -> None:
+        if not self._require_connected(): return
         self.ping_button.setEnabled(False)
         self.worker.submit("ping")
 
     def _on_get_version(self) -> None:
+        if not self._require_connected(): return
         self.version_button.setEnabled(False)
         self.worker.submit("get_version")
 
     def _on_toggle_led(self) -> None:
+        if not self._require_connected(): return
         self.led_button.setEnabled(False)
         self.led_running = True
         self.worker.submit("set_led", enabled=not self.led_state)
@@ -240,11 +292,58 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(f"LED{'打开' if self.led_state else '关闭'}成功，耗时 {elapsed:.0f} ms", 5000)
             else:
                 self.statusBar().showMessage(f"LED操作失败：{result['error']}", 5000)
+        elif name in ("store_config", "load_config", "restore_defaults"):
+            if success:
+                state = result["data"]
+                cmd_text = {"store_config": "保存配置", "load_config": "加载配置", "restore_defaults": "恢复默认"}
+                if isinstance(state, dict):
+                    if state.get("saved"):
+                        state_text = "已发送保存命令"
+                    else:
+                        state_text = json.dumps(state, ensure_ascii=False, default=str)
+                else:
+                    state_text = {0: "空闲", 1: "待保存", 2: "保存中", 3: "错误"}.get(state, f"未知({state})")
+                self.statusBar().showMessage(f"{cmd_text.get(name, name)}完成，状态：{state_text}，耗时 {elapsed:.0f} ms", 5000)
+            else:
+                self.statusBar().showMessage(f"{name}失败：{result['error']}", 5000)
+        elif name == "get_config_status":
+            if success:
+                d = result["data"]
+                src = {0:"空白", 1:"EEPROM离线", 2:"CRC错误", 3:"已加载"}.get(d.get("config_source", 0), "?")
+                self.statusBar().showMessage(
+                    f"EEPROM:{'在线' if d.get('eeprom_online') else '离线'} "
+                    f"槽:{d.get('active_slot')} 状态:{d.get('state')} "
+                    f"Seq:{d.get('sequence')} 保存:{d.get('save_count')}次 "
+                    f"来源:{src} 耗时{elapsed:.0f}ms", 8000)
+            else:
+                self.statusBar().showMessage(f"{name}失败：{result['error']}", 5000)
+
+    def _handle_eeprom_result(self, name: str, result: dict) -> None:
+        elapsed = result.get("elapsed_ms", 0) if isinstance(result, dict) else 0
+        if not isinstance(result, dict) or not result.get("success"):
+            error = result.get("error", "验证失败") if isinstance(result, dict) else "验证失败"
+            text = f"EEPROM测试失败：{error}"
+            self.eeprom_status_label.setText(text)
+            self.statusBar().showMessage(text, 8000)
+            return
+
+        if name == "eeprom_test_write_save":
+            value = result.get("value")
+            readback = result.get("readback")
+            text = f"已写入并保存：寄存器3={value}，回读={readback}，请断电/复位后点验证"
+            self.eeprom_status_label.setText(text)
+            self.statusBar().showMessage(f"{text}，耗时 {elapsed:.0f} ms", 10000)
+        elif name == "eeprom_verify":
+            expected = result.get("expected")
+            value = result.get("value")
+            text = f"EEPROM验证通过：期望={expected}，实际={value}"
+            self.eeprom_status_label.setText(text)
+            self.statusBar().showMessage(f"{text}，耗时 {elapsed:.0f} ms", 10000)
 
     def _write_mapped(self, item, edit: QDoubleSpinBox) -> None:
         try: raw = item.encode(edit.value())
         except ValueError as exc: QMessageBox.warning(self, "参数错误", str(exc)); return
-        self.worker.submit("write_register", address=item.address, value=raw)
+        self._safe_submit("write_register", address=item.address, value=raw)
 
     def save_log(self) -> None:
         path, _ = QFileDialog.getSaveFileName(self, "导出通信日志", "communication.log", "日志文件 (*.log *.txt)")

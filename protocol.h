@@ -10,6 +10,7 @@
 
 void Protocol_Init(void);
 void Protocol_Task(void);
+void Protocol_ProcessByte(uint8_t data);
 void Protocol_TimerTick1ms(void);
 
 extern volatile uint8_t global_tx_buffer[PROTOCOL_FRAME_MAX_LENGTH];

@@ -23,7 +23,7 @@
 * Device(s)    : R5F100LG
 * Tool-Chain   : CCRL
 * Description  : This file implements main function.
-* Creation Date: 2026/7/17
+* Creation Date: 2026/7/20
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -38,6 +38,8 @@ Includes
 /* Start user code for include. Do not edit comment generated here */
 #include "bsp_rs485.h"
 #include "protocol.h"
+#include "modbus_protocol.h"
+#include "app_config.h"
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
 
@@ -68,8 +70,17 @@ void main(void)
     BSP_RS485_SendString("READY\r\n");
     while (1U)
     {
-        
+        uint8_t data;
+
+        while (BSP_RS485_Read(&data, 1U) == 1U)
+        {
+            Protocol_ProcessByte(data);
+            ModbusProtocol_ProcessByte(data);
+        }
+
         Protocol_Task();
+        ModbusProtocol_Task();
+        AppConfig_Task();
         R_WDT_Restart();
     }
 
@@ -96,7 +107,6 @@ void R_MAIN_UserInit(void)
      * ?????UART1?RS-485?
      */
     BSP_RS485_Init();
-    Protocol_Init();
 
     /*
      * LED????
@@ -108,10 +118,16 @@ void R_MAIN_UserInit(void)
      */
     EI();
 
+    /*
+     * EEPROM/I2C uses interrupt callbacks, so load persistent config only
+     * after global interrupts are enabled.
+     */
+    AppConfig_Init();
+    Protocol_Init();
+    ModbusProtocol_Init();
+
     /* End user code. Do not edit comment generated here */
 }
 
 /* Start user code for adding. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
-
-

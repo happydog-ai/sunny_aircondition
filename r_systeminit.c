@@ -23,7 +23,7 @@
 * Device(s)    : R5F100LG
 * Tool-Chain   : CCRL
 * Description  : This file implements system initializing function.
-* Creation Date: 2026/7/17
+* Creation Date: 2026/7/20
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -64,6 +64,7 @@ void R_Systeminit(void)
     R_CGC_Create();
     R_PORT_Create();
     R_SAU0_Create();
+    R_IICA0_Create();
     R_TAU0_Create();
     R_WDT_Create();
 

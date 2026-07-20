@@ -51,10 +51,31 @@ class RegisterMap:
         end = max(x.address for x in items)
         return start, end - start + 1
 
+    @staticmethod
+    def spans(items: list[RegisterItem]) -> list[tuple[int, int]]:
+        if not items:
+            return []
+        ordered = sorted(items, key=lambda x: x.address)
+        blocks: list[tuple[int, int]] = []
+        block_start = ordered[0].address
+        block_end = ordered[0].address
+        for i in range(1, len(ordered)):
+            addr = ordered[i].address
+            if addr - block_end <= 1:
+                block_end = addr
+            else:
+                blocks.append((block_start, block_end - block_start + 1))
+                block_start = addr
+                block_end = addr
+        blocks.append((block_start, block_end - block_start + 1))
+        return blocks
+
     def decode_group(self, group: str, start: int,
-                     values: list[int] | list[bool]) -> dict[str, Any]:
+                      values: list[int] | list[bool],
+                      block_items: list[RegisterItem] | None = None) -> dict[str, Any]:
         result: dict[str, Any] = {}
-        for item in self.items(group):
+        items = block_items if block_items is not None else self.items(group)
+        for item in items:
             raw = values[item.address - start]
             result[item.name] = bool(raw) if group in ("coils", "discrete_inputs") else item.decode(int(raw))
         return result

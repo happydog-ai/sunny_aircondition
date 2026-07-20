@@ -23,7 +23,7 @@
 * Device(s)    : R5F100LG
 * Tool-Chain   : CCRL
 * Description  : This file implements device driver for Serial module.
-* Creation Date: 2026/7/17
+* Creation Date: 2026/7/20
 ***********************************************************************************************************************/
 
 #ifndef SERIAL_H
@@ -375,6 +375,9 @@ Macro definitions
 ***********************************************************************************************************************/
 #define _CE00_UART1_RECEIVE_DIVISOR      (0xCE00U)
 #define _CE00_UART1_TRANSMIT_DIVISOR     (0xCE00U)
+#define _10_IICA0_MASTERADDRESS          (0x10U)
+#define _55_IICA0_IICWH_VALUE            (0x55U)
+#define _4C_IICA0_IICWL_VALUE            (0x4CU)
 
 /***********************************************************************************************************************
 Typedef definitions
@@ -393,6 +396,16 @@ static void r_uart1_callback_error(uint8_t err_type);
 static void r_uart1_callback_receiveend(void);
 static void r_uart1_callback_sendend(void);
 static void r_uart1_callback_softwareoverrun(uint16_t rx_data);
+void R_IICA0_Create(void);
+MD_STATUS R_IICA0_Master_Send(uint8_t adr, uint8_t * const tx_buf, uint16_t tx_num, uint8_t wait);
+MD_STATUS R_IICA0_Master_Receive(uint8_t adr, uint8_t * const rx_buf, uint16_t rx_num, uint8_t wait);
+void R_IICA0_Stop(void);
+void R_IICA0_StopCondition(void);
+static void r_iica0_callback_master_sendend(void);
+static void r_iica0_callback_master_receiveend(void);
+static void r_iica0_callback_master_error(MD_STATUS flag);
+static void iica0_master_handler(void);
+static void iica0_slave_handler(void);
 
 /* Start user code for function. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */

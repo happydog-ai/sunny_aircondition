@@ -12,7 +12,13 @@ CMD_GET_VERSION = 0x02
 CMD_ECHO = 0x10
 CMD_LED_SET = 0x20
 CMD_GET_STATUS = 0x21
+CMD_STORE_CONFIG = 0x30
+CMD_LOAD_CONFIG = 0x31
+CMD_RESTORE_DEFAULTS = 0x32
+CMD_GET_CONFIG_STATUS = 0x33
+CMD_GET_CONFIG_DATA = 0x34
 ERROR_TEXT = {1: "未知命令", 2: "数据长度错误", 3: "数据内容错误", 4: "设备忙", 5: "设备内部错误"}
+STATE_TEXT = {0: "空闲", 1: "待保存", 2: "保存中", 3: "错误"}
 
 
 @dataclass(slots=True)
@@ -95,3 +101,34 @@ class AA55Protocol:
         if len(data) >= 3:
             result["uart_error_count"] = data[2]
         return result
+
+    def store_config(self) -> int:
+        data = self.transact(CMD_STORE_CONFIG).data
+        return data[0] if data else 255
+
+    def load_config(self) -> int:
+        data = self.transact(CMD_LOAD_CONFIG).data
+        return data[0] if data else 255
+
+    def restore_defaults(self) -> int:
+        data = self.transact(CMD_RESTORE_DEFAULTS).data
+        return data[0] if data else 255
+
+    def get_config_status(self) -> dict:
+        data = self.transact(CMD_GET_CONFIG_STATUS).data
+        if not data or len(data) < 12:
+            return {"error": "no data"}
+        return {
+            "state": data[0],
+            "eeprom_online": data[1],
+            "active_slot": data[2],
+            "dirty": data[3],
+            "last_result": data[4],
+            "sequence": data[5] | (data[6] << 8) | (data[7] << 16) | (data[8] << 24),
+            "save_count": data[9] | (data[10] << 8),
+            "config_source": data[11],
+        }
+
+    def get_config_data(self) -> list[int]:
+        data = self.transact(CMD_GET_CONFIG_DATA).data
+        return [data[i] | (data[i + 1] << 8) for i in range(0, len(data), 2)]
