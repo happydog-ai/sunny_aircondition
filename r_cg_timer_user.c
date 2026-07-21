@@ -36,6 +36,10 @@ Includes
 #include "protocol.h"
 #include "modbus_protocol.h"
 #include "app_config.h"
+#include "switch_input.h"
+#include "driver_board_comm.h"
+#include "high_pressure_protection.h"
+#include "four_way_valve.h"
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
 
@@ -79,6 +83,10 @@ static void __near r_tau0_channel0_interrupt(void)
     Protocol_TimerTick1ms();
     ModbusProtocol_TimerTick1ms();
     AppConfig_TimerTick1ms();
+    SwitchInput_TimerTick1ms();
+    DriverBoardComm_TimerTick1ms();
+    HighPressureProtection_TimerTick1ms();
+    FourWayValve_TimerTick1ms();
 
     /* End user code. Do not edit comment generated here */
 }

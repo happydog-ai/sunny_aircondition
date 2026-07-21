@@ -35,6 +35,7 @@ class MainWindow(QMainWindow):
         self.connected = False
         self.led_state = False
         self.led_running = False
+        self._compressor_on = False
         self.last_state: dict = {}
         self.x = deque(maxlen=300); self.ambient_temp = deque(maxlen=300); self.target_temp = deque(maxlen=300); self.sample = 0
         self._build_ui(); self._connect_signals(); self.refresh_ports(); self._set_connected(False)
@@ -105,7 +106,27 @@ class MainWindow(QMainWindow):
         reg_box = QGroupBox("执行器参数（Modbus保持寄存器）"); form = QFormLayout(reg_box)
         for title, address, maximum in (("风机PWM（‰）", 3, 1000),):
             row = QWidget(); h = QHBoxLayout(row); h.setContentsMargins(0, 0, 0, 0); spin = QSpinBox(); spin.setRange(0, maximum); button = QPushButton("写入"); button.clicked.connect(lambda _=False, a=address, s=spin: self._safe_submit("write_register", address=a, value=s.value())); h.addWidget(spin); h.addWidget(button); form.addRow(title, row)
-        layout.addWidget(coil_box); layout.addWidget(aa_box); layout.addWidget(reg_box); layout.addStretch(); return page
+        layout.addWidget(coil_box); layout.addWidget(aa_box); layout.addWidget(reg_box)
+
+        hp_box = QGroupBox("高压保护+压缩机调试")
+        hp_grid = QGridLayout(hp_box)
+        self.compressor_button = QPushButton("启动压缩机(调试)")
+        self.compressor_button.setCheckable(True)
+        self.compressor_button.clicked.connect(self._on_toggle_compressor)
+        self.hp_status_label = QLabel("高压：--")
+        self.hp_lock_label = QLabel("锁机：--")
+        self.hp_count_label = QLabel("次数：--")
+        self.hp_timer_label = QLabel("计时：--")
+        self.k0_state_label = QLabel("K0开关：--")
+        hp_grid.addWidget(self.compressor_button, 0, 0)
+        hp_grid.addWidget(self.k0_state_label, 0, 1)
+        hp_grid.addWidget(self.hp_status_label, 1, 0)
+        hp_grid.addWidget(self.hp_lock_label, 1, 1)
+        hp_grid.addWidget(self.hp_count_label, 2, 0)
+        hp_grid.addWidget(self.hp_timer_label, 2, 1)
+        layout.addWidget(hp_box)
+
+        layout.addStretch(); return page
 
     def _parameters(self) -> QWidget:
         page = QWidget(); layout = QVBoxLayout(page)
@@ -201,6 +222,24 @@ class MainWindow(QMainWindow):
                 self.led_button.setText("关闭LED" if led_state else "打开LED")
         for name, row in self.param_rows.items():
             if name in state: self.param_table.item(row, 2).setText(str(state[name]))
+        if "hp_fault_code" in state:
+            self._update_high_pressure_panel(state)
+        if "K0" in state:
+            hp_active = bool(int(state.get("compressor_running", state.get("compressor_debug", 0))) or
+                             int(state.get("hp_fault_code", 0)) or
+                             int(state.get("hp_locked", 0)))
+            if hp_active:
+                k0 = bool(state["K0"])
+                self.k0_state_label.setText(f"K0：{'闭合' if k0 else '断开'}")
+                self.k0_state_label.setStyleSheet("color:green" if k0 else "color:red")
+            else:
+                self.k0_state_label.setText("K0：待机未检测")
+                self.k0_state_label.setStyleSheet("color:gray")
+        if "compressor_debug" in state:
+            running = bool(state["compressor_debug"])
+            self.compressor_button.setChecked(running)
+            self.compressor_button.setText("停止压缩机" if running else "启动压缩机(调试)")
+
         self.sample += 1
         if "ambient_temp" in state or "target_temp" in state:
             self.x.append(self.sample); self.ambient_temp.append(float(state.get("ambient_temp", float("nan")))); self.target_temp.append(float(state.get("target_temp", float("nan")))); self.curve_ambient.setData(list(self.x), list(self.ambient_temp)); self.curve_target.setData(list(self.x), list(self.target_temp))
@@ -262,6 +301,63 @@ class MainWindow(QMainWindow):
         self.led_button.setEnabled(False)
         self.led_running = True
         self.worker.submit("set_led", enabled=not self.led_state)
+
+    def _on_toggle_compressor(self) -> None:
+        if not self._require_connected(): return
+        on = self.compressor_button.isChecked()
+        self.worker.submit("write_coil", address=7, enabled=on)
+        self._compressor_on = on
+        if on:
+            self.hp_status_label.setText("高压：压缩机已启动，等待状态刷新")
+            self.hp_status_label.setStyleSheet("color:green")
+            self.hp_timer_label.setText("运行计时：0s")
+        else:
+            self.hp_status_label.setText("高压：待机")
+            self.hp_status_label.setStyleSheet("color:gray")
+            self.hp_timer_label.setText("计时：--")
+
+    def _update_high_pressure_panel(self, state: dict) -> None:
+        fc = int(state.get("hp_fault_code", 0))
+        locked = int(state.get("hp_locked", 0))
+        count = int(state.get("hp_fault_count", 0))
+        remain = int(state.get("hp_remain_sec", 0))
+        running = int(state.get("compressor_running", state.get("compressor_debug", 0)))
+        switch_closed = int(state.get("hp_switch_closed", state.get("K0", 0)))
+        run_elapsed = int(state.get("compressor_run_elapsed", 0))
+        protection_elapsed = int(state.get("hp_fault_elapsed", 0))
+
+        in_protection = bool(locked or fc != 0)
+        if not running and not in_protection:
+            self.hp_status_label.setText("高压：待机")
+            self.hp_status_label.setStyleSheet("color:gray")
+            self.hp_lock_label.setText(f"锁机：{'是' if locked else '否'}")
+            self.hp_count_label.setText(f"次数：{count}/3")
+            self.hp_timer_label.setText(f"故障码：{fc}")
+            return
+
+        if locked:
+            self.hp_status_label.setText(f"高压：锁机保护中，已进入保护时间：{protection_elapsed}s，剩余：{remain}s")
+            self.hp_status_label.setStyleSheet("color:red;font-weight:bold")
+            self.hp_timer_label.setText(f"故障码：{fc}，保护计时：{protection_elapsed}s")
+        elif in_protection:
+            self.hp_status_label.setText(f"高压：已进入停机保护时间：{protection_elapsed}s")
+            self.hp_status_label.setStyleSheet("color:orange;font-weight:bold")
+            self.hp_timer_label.setText(f"故障码：{fc}，保护计时：{protection_elapsed}s")
+        elif running:
+            if switch_closed:
+                self.hp_status_label.setText(f"高压：正常，压缩机已经运行时间：{run_elapsed}s")
+                self.hp_status_label.setStyleSheet("color:green")
+            else:
+                self.hp_status_label.setText(f"高压：开关断开确认中，压缩机已经运行时间：{run_elapsed}s，距保护约：{remain}s")
+                self.hp_status_label.setStyleSheet("color:#FF8C00;font-weight:bold")
+            self.hp_timer_label.setText(f"运行计时：{run_elapsed}s")
+        else:
+            self.hp_status_label.setText("高压：压缩机已停止")
+            self.hp_status_label.setStyleSheet("color:gray")
+            self.hp_timer_label.setText(f"故障码：{fc}")
+
+        self.hp_lock_label.setText(f"锁机：{'是' if locked else '否'}")
+        self.hp_count_label.setText(f"次数：{count}/3")
 
     def _handle_aa55_result(self, name: str, result: dict) -> None:
         success = result["success"]

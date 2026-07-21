@@ -24,34 +24,25 @@
       "label": "参数保存",
       "address": 6,
       "writable": true
+    },
+    {
+      "name": "compressor_debug",
+      "label": "压缩机(调试)",
+      "address": 7,
+      "writable": true
     }
   ],
   "discrete_inputs": [
-    {
-      "name": "di1",
-      "label": "DI1状态",
-      "address": 0
-    },
-    {
-      "name": "di2",
-      "label": "DI2状态",
-      "address": 1
-    },
-    {
-      "name": "fan_fault",
-      "label": "风机故障",
-      "address": 17
-    },
-    {
-      "name": "eeprom_valid",
-      "label": "EEPROM数据有效",
-      "address": 20
-    },
-    {
-      "name": "total_fault",
-      "label": "总故障",
-      "address": 21
-    }
+    {"name": "K0", "label": "K0 高压/开关", "address": 0},
+    {"name": "K1", "label": "K1", "address": 1},
+    {"name": "K2", "label": "K2", "address": 2},
+    {"name": "K3", "label": "K3", "address": 3},
+    {"name": "K4", "label": "K4", "address": 4},
+    {"name": "K5", "label": "K5", "address": 5},
+    {"name": "K6", "label": "K6", "address": 6},
+    {"name": "K7", "label": "K7", "address": 7},
+    {"name": "K8", "label": "K8", "address": 8},
+    {"name": "K9", "label": "K9", "address": 9}
   ],
   "input_registers": [
     {
@@ -104,6 +95,90 @@
       "name": "crc_error_count",
       "label": "CRC错误计数",
       "address": 51
+    },
+    {
+      "name": "hp_fault_code",
+      "label": "高压故障码",
+      "address": 80,
+      "minimum": 0,
+      "maximum": 65535
+    },
+    {
+      "name": "hp_locked",
+      "label": "高压锁机",
+      "address": 81,
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "name": "hp_fault_count",
+      "label": "高压故障次数",
+      "address": 82,
+      "minimum": 0,
+      "maximum": 3
+    },
+    {
+      "name": "valve_mode",
+      "label": "四通阀模式",
+      "address": 83,
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "name": "valve_state",
+      "label": "四通阀状态",
+      "address": 84,
+      "minimum": 0,
+      "maximum": 7
+    },
+    {
+      "name": "hp_switch_closed",
+      "label": "高压开关",
+      "address": 85,
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "name": "hp_fault_active",
+      "label": "高压故障中",
+      "address": 86,
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "name": "hp_remain_sec",
+      "label": "高压倒计时",
+      "address": 87,
+      "minimum": 0,
+      "maximum": 65535
+    },
+    {
+      "name": "compressor_running",
+      "label": "压缩机运行",
+      "address": 88,
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "name": "compressor_freq",
+      "label": "压缩机频率",
+      "address": 89,
+      "minimum": 0,
+      "maximum": 300
+    },
+    {
+      "name": "hp_fault_elapsed",
+      "label": "高压保护已持续",
+      "address": 92,
+      "minimum": 0,
+      "maximum": 65535
+    },
+    {
+      "name": "compressor_run_elapsed",
+      "label": "压缩机运行已持续",
+      "address": 93,
+      "minimum": 0,
+      "maximum": 65535
     }
   ],
   "holding_registers": [

@@ -2,6 +2,10 @@
 #include "bsp_rs485.h"
 #include "modbus_protocol.h"
 #include "app_config.h"
+#include "switch_input.h"
+#include "high_pressure_protection.h"
+#include "four_way_valve.h"
+#include "driver_board_comm.h"
 
 /*
  * Modbus RTU version.
@@ -51,7 +55,34 @@
 #define MODBUS_COIL_FAN_ENABLE          (0x0002U)
 #define MODBUS_COIL_FAULT_CLEAR         (0x0005U)
 #define MODBUS_COIL_EEPROM_SAVE         (0x0006U)
-#define MODBUS_COIL_MAX                 (0x0006U)
+#define MODBUS_COIL_COMPRESSOR_DEBUG    (0x0007U)
+#define MODBUS_COIL_FOUR_WAY_COOL       (0x0008U)
+#define MODBUS_COIL_FOUR_WAY_HEAT       (0x0009U)
+#define MODBUS_COIL_MAX                 (0x0009U)
+
+#define MODBUS_DI_K_STABLE_BASE         (0x0000U)
+#define MODBUS_DI_K_RAW_BASE            (0x000AU)
+#define MODBUS_DI_HP_SWITCH_CLOSED      (0x0014U)
+#define MODBUS_DI_HP_FAULT_ACTIVE       (0x0015U)
+#define MODBUS_DI_HP_LOCKED             (0x0016U)
+#define MODBUS_DI_COMPRESSOR_RUNNING    (0x0017U)
+#define MODBUS_DI_MAX                   (0x0017U)
+
+#define MODBUS_IR_HP_FAULT_CODE         (0x0050U)
+#define MODBUS_IR_HP_LOCKED             (0x0051U)
+#define MODBUS_IR_HP_FAULT_COUNT        (0x0052U)
+#define MODBUS_IR_FOUR_WAY_MODE         (0x0053U)
+#define MODBUS_IR_FOUR_WAY_STATE        (0x0054U)
+#define MODBUS_IR_HP_SWITCH_CLOSED      (0x0055U)
+#define MODBUS_IR_HP_FAULT_ACTIVE       (0x0056U)
+#define MODBUS_IR_HP_REMAIN_SECONDS     (0x0057U)
+#define MODBUS_IR_COMPRESSOR_RUNNING    (0x0058U)
+#define MODBUS_IR_COMPRESSOR_FREQ_HZ    (0x0059U)
+#define MODBUS_IR_FOUR_WAY_REQUEST_MODE (0x005AU)
+#define MODBUS_IR_FOUR_WAY_REMAIN_SEC   (0x005BU)
+#define MODBUS_IR_HP_FAULT_ELAPSED_SEC  (0x005CU)
+#define MODBUS_IR_COMP_RUN_ELAPSED_SEC  (0x005DU)
+#define MODBUS_IR_MAX                   (0x005DU)
 
 #define MODBUS_CONFIG_REG_SYSTEM_ENABLE (0x0000U)
 
@@ -86,6 +117,8 @@ static uint16_t ModbusProtocol_Crc16(const uint8_t *data, uint16_t length);
 static uint16_t ModbusProtocol_ReadU16(uint16_t offset);
 static void ModbusProtocol_WriteU16(uint8_t *buffer, uint16_t offset, uint16_t value);
 static uint16_t ModbusProtocol_GetHoldingRegister(uint16_t address);
+static uint16_t ModbusProtocol_GetInputRegister(uint16_t address);
+static uint8_t ModbusProtocol_GetDiscreteInput(uint16_t address);
 static uint8_t ModbusProtocol_GetLedStatus(void);
 static void ModbusProtocol_SetLedStatus(uint8_t status);
 static void ModbusProtocol_ApplyLedOutput(uint8_t logical_on);
@@ -362,6 +395,20 @@ static void ModbusProtocol_HandleReadDiscreteInputs(void)
         response[3U + i] = 0U;
     }
 
+    if ((uint16_t)(start_address + quantity - 1U) > MODBUS_DI_MAX)
+    {
+        ModbusProtocol_SendException(MODBUS_FUNC_READ_DISCRETE_INPUTS, MODBUS_EX_ILLEGAL_DATA_ADDR);
+        return;
+    }
+
+    for (i = 0U; i < quantity; i++)
+    {
+        if (ModbusProtocol_GetDiscreteInput((uint16_t)(start_address + i)) != 0U)
+        {
+            response[3U + (i / 8U)] |= (uint8_t)(1U << (i % 8U));
+        }
+    }
+
     ModbusProtocol_SendFrame(response, (uint16_t)(3U + byte_count));
 }
 
@@ -398,9 +445,18 @@ static void ModbusProtocol_HandleReadInputRegisters(void)
     response[1] = MODBUS_FUNC_READ_INPUT_REGS;
     response[2] = (uint8_t)(quantity * 2U);
 
-    for (index = 0U; index < (uint16_t)(quantity * 2U); index++)
+    if ((uint16_t)(start_address + quantity - 1U) > MODBUS_IR_MAX)
     {
-        response[3U + index] = 0U;
+        ModbusProtocol_SendException(MODBUS_FUNC_READ_INPUT_REGS, MODBUS_EX_ILLEGAL_DATA_ADDR);
+        return;
+    }
+
+    for (index = 0U; index < quantity; index++)
+    {
+        ModbusProtocol_WriteU16(
+            response,
+            (uint16_t)(3U + (index * 2U)),
+            ModbusProtocol_GetInputRegister((uint16_t)(start_address + index)));
     }
 
     ModbusProtocol_SendFrame(response, (uint16_t)(3U + (quantity * 2U)));
@@ -655,7 +711,116 @@ static void ModbusProtocol_WriteU16(uint8_t *buffer, uint16_t offset, uint16_t v
 
 static uint16_t ModbusProtocol_GetHoldingRegister(uint16_t address)
 {
+    switch (address)
+    {
+        case MODBUS_IR_HP_FAULT_CODE:
+            return HighPressureProtection_GetFaultCode();
+
+        case MODBUS_IR_HP_LOCKED:
+            return (uint16_t)(HighPressureProtection_IsLocked() ? 1U : 0U);
+
+        case MODBUS_IR_HP_FAULT_COUNT:
+            return (uint16_t)HighPressureProtection_GetFaultCountInWindow();
+
+        case MODBUS_IR_FOUR_WAY_MODE:
+            return (uint16_t)FourWayValve_GetMode();
+
+        case MODBUS_IR_FOUR_WAY_STATE:
+            return (uint16_t)FourWayValve_GetState();
+
+        default:
+            break;
+    }
+
     return AppConfig_GetRegister(address);
+}
+
+static uint16_t ModbusProtocol_GetInputRegister(uint16_t address)
+{
+    switch (address)
+    {
+        case MODBUS_IR_HP_FAULT_CODE:
+            return HighPressureProtection_GetFaultCode();
+
+        case MODBUS_IR_HP_LOCKED:
+            return (uint16_t)HighPressureProtection_IsLocked();
+
+        case MODBUS_IR_HP_FAULT_COUNT:
+            return (uint16_t)HighPressureProtection_GetFaultCountInWindow();
+
+        case MODBUS_IR_FOUR_WAY_MODE:
+            return (uint16_t)FourWayValve_GetMode();
+
+        case MODBUS_IR_FOUR_WAY_STATE:
+            return (uint16_t)FourWayValve_GetState();
+
+        case MODBUS_IR_HP_SWITCH_CLOSED:
+            return (uint16_t)HighPressureProtection_GetSwitchClosed();
+
+        case MODBUS_IR_HP_FAULT_ACTIVE:
+            return (uint16_t)HighPressureProtection_IsFaultActive();
+
+        case MODBUS_IR_HP_REMAIN_SECONDS:
+            return (uint16_t)(HighPressureProtection_GetRemainMs() / 1000UL);
+
+        case MODBUS_IR_COMPRESSOR_RUNNING:
+            return (uint16_t)DriverBoard_IsCompressorRunning();
+
+        case MODBUS_IR_COMPRESSOR_FREQ_HZ:
+            return DriverBoard_GetCompressorFrequencyHz();
+
+        case MODBUS_IR_FOUR_WAY_REQUEST_MODE:
+            return (uint16_t)FourWayValve_GetRequestedMode();
+
+        case MODBUS_IR_FOUR_WAY_REMAIN_SEC:
+            return (uint16_t)(FourWayValve_GetRemainMs() / 1000UL);
+
+        case MODBUS_IR_HP_FAULT_ELAPSED_SEC:
+            return HighPressureProtection_GetFaultElapsedSec();
+
+        case MODBUS_IR_COMP_RUN_ELAPSED_SEC:
+            return DriverBoard_GetCompressorRunElapsedSec();
+
+        default:
+            break;
+    }
+
+    return 0U;
+}
+
+static uint8_t ModbusProtocol_GetDiscreteInput(uint16_t address)
+{
+    if ((address >= MODBUS_DI_K_STABLE_BASE) &&
+        (address < (uint16_t)(MODBUS_DI_K_STABLE_BASE + SWITCH_INPUT_COUNT)))
+    {
+        return SwitchInput_GetStable((switch_channel_t)(address - MODBUS_DI_K_STABLE_BASE));
+    }
+
+    if ((address >= MODBUS_DI_K_RAW_BASE) &&
+        (address < (uint16_t)(MODBUS_DI_K_RAW_BASE + SWITCH_INPUT_COUNT)))
+    {
+        return SwitchInput_GetRaw((switch_channel_t)(address - MODBUS_DI_K_RAW_BASE));
+    }
+
+    switch (address)
+    {
+        case MODBUS_DI_HP_SWITCH_CLOSED:
+            return HighPressureProtection_GetSwitchClosed();
+
+        case MODBUS_DI_HP_FAULT_ACTIVE:
+            return HighPressureProtection_IsFaultActive();
+
+        case MODBUS_DI_HP_LOCKED:
+            return HighPressureProtection_IsLocked();
+
+        case MODBUS_DI_COMPRESSOR_RUNNING:
+            return DriverBoard_IsCompressorRunning();
+
+        default:
+            break;
+    }
+
+    return 0U;
 }
 
 static uint8_t ModbusProtocol_GetLedStatus(void)
@@ -696,7 +861,22 @@ static uint8_t ModbusProtocol_GetCoil(uint16_t address)
         return ModbusProtocol_GetLedStatus();
     }
 
-    if (address <= MODBUS_COIL_MAX)
+    if (address == MODBUS_COIL_FOUR_WAY_COOL)
+    {
+        return (FourWayValve_GetRequestedMode() == FOUR_WAY_MODE_COOL) ? 1U : 0U;
+    }
+
+    if (address == MODBUS_COIL_FOUR_WAY_HEAT)
+    {
+        return (FourWayValve_GetRequestedMode() == FOUR_WAY_MODE_HEAT) ? 1U : 0U;
+    }
+
+    if (address == MODBUS_COIL_COMPRESSOR_DEBUG)
+    {
+        return DriverBoard_IsCompressorRunning();
+    }
+
+    if (address <= 7U)
     {
         return (uint8_t)((g_modbus_coils >> address) & 0x01U);
     }
@@ -711,6 +891,24 @@ static uint8_t ModbusProtocol_SetCoil(uint16_t address, uint8_t status)
     if (address > MODBUS_COIL_MAX)
     {
         return 0U;
+    }
+
+    if (address == MODBUS_COIL_FOUR_WAY_COOL)
+    {
+        if (status != 0U)
+        {
+            FourWayValve_RequestCooling();
+        }
+        return 1U;
+    }
+
+    if (address == MODBUS_COIL_FOUR_WAY_HEAT)
+    {
+        if (status != 0U)
+        {
+            FourWayValve_RequestHeating();
+        }
+        return 1U;
     }
 
     mask = (uint8_t)(1U << address);
@@ -734,6 +932,10 @@ static uint8_t ModbusProtocol_SetCoil(uint16_t address, uint8_t status)
         {
             AppConfig_Save();
         }
+    }
+    else if (address == MODBUS_COIL_COMPRESSOR_DEBUG)
+    {
+        DriverBoard_DebugSetCompressorRunning(status);
     }
 
     return 1U;

@@ -40,6 +40,11 @@ Includes
 #include "protocol.h"
 #include "modbus_protocol.h"
 #include "app_config.h"
+#include "bsp_relay.h"
+#include "switch_input.h"
+#include "driver_board_comm.h"
+#include "high_pressure_protection.h"
+#include "four_way_valve.h"
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
 
@@ -81,6 +86,10 @@ void main(void)
         Protocol_Task();
         ModbusProtocol_Task();
         AppConfig_Task();
+        SwitchInput_Task();
+        DriverBoardComm_Task();
+        HighPressureProtection_Task();
+        FourWayValve_Task();
         R_WDT_Restart();
     }
 
@@ -125,6 +134,12 @@ void R_MAIN_UserInit(void)
     AppConfig_Init();
     Protocol_Init();
     ModbusProtocol_Init();
+
+    BSP_Relay_Init();
+    SwitchInput_Init();
+    DriverBoardComm_Init();
+    HighPressureProtection_Init();
+    FourWayValve_Init();
 
     /* End user code. Do not edit comment generated here */
 }
