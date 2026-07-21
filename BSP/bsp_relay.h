@@ -11,6 +11,11 @@ typedef enum {
     RELAY_OUT_1,
     RELAY_OUT_2,
     RELAY_OUT_3,
+    RELAY_OUT_4,
+    RELAY_OUT_5,
+    RELAY_OUT_6,
+    RELAY_OUT_7,
+    RELAY_OUT_8,
     RELAY_OUT_COUNT,
     RELAY_OUT_INVALID = 0xFFU
 } relay_channel_t;

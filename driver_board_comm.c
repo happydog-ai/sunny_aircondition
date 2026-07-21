@@ -13,6 +13,7 @@ void DriverBoardComm_Init(void)
     g_driver_restore_requested = 0U;
     g_driver_compressor_frequency_hz = 0U;
     g_driver_compressor_run_elapsed_ms = 0UL;
+    (void)BSP_Relay_Off(COMPRESSOR_RUN_RELAY);
 }
 
 void DriverBoardComm_Task(void)
@@ -23,6 +24,7 @@ void DriverBoardComm_Task(void)
      */
     if (g_driver_stop_requested != 0U)
     {
+        (void)BSP_Relay_Off(COMPRESSOR_RUN_RELAY);
         g_driver_compressor_running = 0U;
         g_driver_compressor_frequency_hz = 0U;
         g_driver_stop_requested = 0U;
@@ -34,6 +36,10 @@ void DriverBoardComm_Task(void)
          * Real restore command should be sent here after the driver-board
          * communication interface is confirmed.
          */
+        (void)BSP_Relay_On(COMPRESSOR_RUN_RELAY);
+        g_driver_compressor_running = 1U;
+        g_driver_compressor_frequency_hz = 50U;
+        g_driver_compressor_run_elapsed_ms = 0UL;
         g_driver_restore_requested = 0U;
     }
 }
@@ -55,6 +61,7 @@ void DriverBoardComm_TimerTick1ms(void)
 
 uint8_t DriverBoard_RequestCompressorStop(void)
 {
+    (void)BSP_Relay_Off(COMPRESSOR_RUN_RELAY);
     g_driver_stop_requested = 1U;
     return 1U;
 }
@@ -95,6 +102,7 @@ void DriverBoard_DebugSetCompressorRunning(uint8_t running)
     g_driver_compressor_frequency_hz = (running != 0U) ? 50U : 0U;
     if (running != 0U)
     {
+        (void)BSP_Relay_On(COMPRESSOR_RUN_RELAY);
         g_driver_stop_requested = 0U;
         if (old_running == 0U)
         {
@@ -103,6 +111,7 @@ void DriverBoard_DebugSetCompressorRunning(uint8_t running)
     }
     else
     {
+        (void)BSP_Relay_Off(COMPRESSOR_RUN_RELAY);
         g_driver_compressor_run_elapsed_ms = 0UL;
     }
 }

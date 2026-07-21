@@ -2,6 +2,9 @@
 #define DRIVER_BOARD_COMM_H
 
 #include "r_cg_macrodriver.h"
+#include "bsp_relay.h"
+
+#define COMPRESSOR_RUN_RELAY    (RELAY_OUT_0)
 
 void DriverBoardComm_Init(void);
 void DriverBoardComm_Task(void);
