@@ -14,6 +14,34 @@
 #define APP_CONFIG_COMMIT_FLAG      (0x5AU)
 #define APP_CONFIG_SAVE_DELAY_MS    (2000U)
 
+/*
+ * TH1 temperature acquisition configuration.
+ * ADC: 10-bit, VDD/VSS reference, ANI0 selected by CS+.
+ */
+#define TEMPERATURE_ADC_FULL_SCALE       (1023U)
+#define TEMPERATURE_ADC_VREF_MV          (5000UL)
+#define TEMPERATURE_DIVIDER_RESISTOR_OHM (5100UL)
+#define TEMPERATURE_TH1_MUX_CHANNEL      (0U)
+#define TEMPERATURE_SAMPLE_COUNT         (8U)
+#define TEMPERATURE_MUX_SETTLE_MS        (1U)
+#define TEMPERATURE_SAMPLE_PERIOD_MS     (1000UL)
+#define TEMPERATURE_OPEN_RAW_THRESHOLD   (5U)
+#define TEMPERATURE_SHORT_RAW_THRESHOLD  (1018U)
+#define TEMPERATURE_TEMP_INVALID_0P1C    ((int16_t)0x7FFF)
+
+/*
+ * Board channel name: TH1/CN5.
+ * External probe: TH2 copper tube probe, MF58-502X NTC.
+ * Use 5k/B3470 parameters, not 20k/B4000.
+ */
+#define TEMPERATURE_NTC_CONFIGURED       (1U)
+#define TEMPERATURE_NTC_R25_OHM          (5000UL)
+#define TEMPERATURE_NTC_B_VALUE          (3470U)
+#define TEMPERATURE_MIN_TEMP_0P1C        ((int16_t)-300)
+#define TEMPERATURE_MAX_TEMP_0P1C        ((int16_t)1050)
+#define TEMPERATURE_DEBUG_OUTPUT_ENABLE  (0U)
+#define TEMPERATURE_DEBUG_OUTPUT_RS485   (0U)
+
 #define APP_CONFIG_STATE_IDLE         (0U)
 #define APP_CONFIG_STATE_DIRTY        (1U)
 #define APP_CONFIG_STATE_SAVING       (2U)

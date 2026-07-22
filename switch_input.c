@@ -63,6 +63,11 @@ void SwitchInput_Task(void)
         return;
     }
 
+    if (BSP_SwitchMux_Request(BSP_SWITCH_MUX_OWNER_SWITCH) == 0U)
+    {
+        return;
+    }
+
     g_switch_scan_tick = 0U;
 
     if (g_switch_waiting_settle != 0U)
@@ -75,6 +80,7 @@ void SwitchInput_Task(void)
         }
         BSP_SwitchMux_Select(g_switch_mux_channel);
         g_switch_waiting_settle = 0U;
+        BSP_SwitchMux_Release(BSP_SWITCH_MUX_OWNER_SWITCH);
     }
     else
     {

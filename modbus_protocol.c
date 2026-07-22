@@ -6,6 +6,7 @@
 #include "high_pressure_protection.h"
 #include "four_way_valve.h"
 #include "driver_board_comm.h"
+#include "temperature_sensor.h"
 
 /*
  * Modbus RTU version.
@@ -82,7 +83,13 @@
 #define MODBUS_IR_FOUR_WAY_REMAIN_SEC   (0x005BU)
 #define MODBUS_IR_HP_FAULT_ELAPSED_SEC  (0x005CU)
 #define MODBUS_IR_COMP_RUN_ELAPSED_SEC  (0x005DU)
-#define MODBUS_IR_MAX                   (0x005DU)
+#define MODBUS_IR_TH1_RAW_AVG           (0x0060U)
+#define MODBUS_IR_TH1_VOLTAGE_MV        (0x0061U)
+#define MODBUS_IR_TH1_RESISTANCE_LO     (0x0062U)
+#define MODBUS_IR_TH1_RESISTANCE_HI     (0x0063U)
+#define MODBUS_IR_TH1_TEMP_0P1C         (0x0064U)
+#define MODBUS_IR_TH1_STATUS            (0x0065U)
+#define MODBUS_IR_MAX                   (0x0065U)
 
 #define MODBUS_CONFIG_REG_SYSTEM_ENABLE (0x0000U)
 
@@ -90,8 +97,14 @@
 
 static uint8_t g_modbus_rx_frame[MODBUS_RX_BUFFER_SIZE];
 static uint16_t g_modbus_rx_length;
+static uint16_t g_modbus_rx_expected_length;
 static volatile uint8_t g_modbus_frame_timeout;
 static uint8_t g_modbus_coils;
+static uint8_t g_modbus_pending_th1_response;
+static volatile uint16_t g_modbus_pending_th1_timeout_ms;
+static uint16_t g_modbus_pending_th1_start_address;
+static uint16_t g_modbus_pending_th1_quantity;
+static uint16_t g_modbus_pending_th1_sequence;
 
 volatile uint8_t g_modbus_debug_rx_frame[MODBUS_RX_BUFFER_SIZE];
 volatile uint16_t g_modbus_debug_rx_length;
@@ -102,6 +115,7 @@ volatile uint8_t g_modbus_debug_last_exception;
 volatile uint8_t g_modbus_debug_last_result;
 
 static void ModbusProtocol_ResetRx(void);
+static uint16_t ModbusProtocol_GetExpectedLength(void);
 static void ModbusProtocol_ProcessFrame(void);
 static void ModbusProtocol_SendFrame(uint8_t *frame, uint16_t length_without_crc);
 static void ModbusProtocol_SendException(uint8_t function, uint8_t exception);
@@ -109,6 +123,8 @@ static void ModbusProtocol_HandleReadCoils(void);
 static void ModbusProtocol_HandleReadDiscreteInputs(void);
 static void ModbusProtocol_HandleReadHoldingRegisters(void);
 static void ModbusProtocol_HandleReadInputRegisters(void);
+static void ModbusProtocol_SendInputRegisterResponse(uint16_t start_address, uint16_t quantity);
+static uint8_t ModbusProtocol_IsTH1RegisterRange(uint16_t start_address, uint16_t quantity);
 static void ModbusProtocol_HandleWriteSingleCoil(void);
 static void ModbusProtocol_HandleWriteSingleRegister(void);
 static void ModbusProtocol_HandleWriteMultipleRegisters(void);
@@ -135,12 +151,30 @@ void ModbusProtocol_Init(void)
         g_modbus_coils |= (uint8_t)(1U << MODBUS_COIL_SYSTEM_ENABLE);
     }
     ModbusProtocol_ApplyLedOutput(ModbusProtocol_GetLedStatus());
+    g_modbus_pending_th1_response = 0U;
+    g_modbus_pending_th1_timeout_ms = 0U;
     ModbusProtocol_ResetRx();
 }
 
 void ModbusProtocol_Task(void)
 {
-    if ((g_modbus_rx_length > 0U) && (g_modbus_frame_timeout == 0U))
+    if (g_modbus_pending_th1_response != 0U)
+    {
+        if ((Temperature_GetTH1SampleSequence() != g_modbus_pending_th1_sequence) ||
+            (g_modbus_pending_th1_timeout_ms == 0U))
+        {
+            ModbusProtocol_SendInputRegisterResponse(
+                g_modbus_pending_th1_start_address,
+                g_modbus_pending_th1_quantity);
+            g_modbus_pending_th1_response = 0U;
+        }
+        return;
+    }
+
+    if ((g_modbus_rx_length > 0U) &&
+        ((g_modbus_frame_timeout == 0U) ||
+         ((g_modbus_rx_expected_length > 0U) &&
+          (g_modbus_rx_length >= g_modbus_rx_expected_length))))
     {
         ModbusProtocol_ProcessFrame();
         ModbusProtocol_ResetRx();
@@ -153,6 +187,7 @@ void ModbusProtocol_ProcessByte(uint8_t data)
     {
         g_modbus_rx_frame[g_modbus_rx_length] = data;
         g_modbus_rx_length++;
+        g_modbus_rx_expected_length = ModbusProtocol_GetExpectedLength();
     }
     else
     {
@@ -168,12 +203,54 @@ void ModbusProtocol_TimerTick1ms(void)
     {
         g_modbus_frame_timeout--;
     }
+
+    if (g_modbus_pending_th1_timeout_ms > 0U)
+    {
+        g_modbus_pending_th1_timeout_ms--;
+    }
 }
 
 static void ModbusProtocol_ResetRx(void)
 {
     g_modbus_rx_length = 0U;
+    g_modbus_rx_expected_length = 0U;
     g_modbus_frame_timeout = 0U;
+}
+
+static uint16_t ModbusProtocol_GetExpectedLength(void)
+{
+    uint8_t function;
+
+    if (g_modbus_rx_length < 2U)
+    {
+        return 0U;
+    }
+
+    function = g_modbus_rx_frame[1];
+
+    switch (function)
+    {
+        case MODBUS_FUNC_READ_COILS:
+        case MODBUS_FUNC_READ_DISCRETE_INPUTS:
+        case MODBUS_FUNC_READ_HOLDING_REGS:
+        case MODBUS_FUNC_READ_INPUT_REGS:
+        case MODBUS_FUNC_WRITE_SINGLE_COIL:
+        case MODBUS_FUNC_WRITE_SINGLE_REG:
+        case MODBUS_FUNC_DIAGNOSTICS:
+            return 8U;
+
+        case MODBUS_FUNC_WRITE_MULTIPLE_REGS:
+            if (g_modbus_rx_length >= 7U)
+            {
+                return (uint16_t)(9U + g_modbus_rx_frame[6U]);
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    return 0U;
 }
 
 static void ModbusProtocol_ProcessFrame(void)
@@ -416,8 +493,6 @@ static void ModbusProtocol_HandleReadInputRegisters(void)
 {
     uint16_t start_address;
     uint16_t quantity;
-    uint16_t index;
-    uint8_t response[MODBUS_TX_BUFFER_SIZE];
 
     if (g_modbus_rx_length != 8U)
     {
@@ -441,15 +516,34 @@ static void ModbusProtocol_HandleReadInputRegisters(void)
         return;
     }
 
-    response[0] = MODBUS_DEVICE_ADDR;
-    response[1] = MODBUS_FUNC_READ_INPUT_REGS;
-    response[2] = (uint8_t)(quantity * 2U);
-
     if ((uint16_t)(start_address + quantity - 1U) > MODBUS_IR_MAX)
     {
         ModbusProtocol_SendException(MODBUS_FUNC_READ_INPUT_REGS, MODBUS_EX_ILLEGAL_DATA_ADDR);
         return;
     }
+
+    if (ModbusProtocol_IsTH1RegisterRange(start_address, quantity) != 0U)
+    {
+        g_modbus_pending_th1_start_address = start_address;
+        g_modbus_pending_th1_quantity = quantity;
+        g_modbus_pending_th1_sequence = Temperature_GetTH1SampleSequence();
+        g_modbus_pending_th1_response = 1U;
+        g_modbus_pending_th1_timeout_ms = 100U;
+        (void)Temperature_RequestTH1Sample();
+        return;
+    }
+
+    ModbusProtocol_SendInputRegisterResponse(start_address, quantity);
+}
+
+static void ModbusProtocol_SendInputRegisterResponse(uint16_t start_address, uint16_t quantity)
+{
+    uint16_t index;
+    uint8_t response[MODBUS_TX_BUFFER_SIZE];
+
+    response[0] = MODBUS_DEVICE_ADDR;
+    response[1] = MODBUS_FUNC_READ_INPUT_REGS;
+    response[2] = (uint8_t)(quantity * 2U);
 
     for (index = 0U; index < quantity; index++)
     {
@@ -460,6 +554,26 @@ static void ModbusProtocol_HandleReadInputRegisters(void)
     }
 
     ModbusProtocol_SendFrame(response, (uint16_t)(3U + (quantity * 2U)));
+}
+
+static uint8_t ModbusProtocol_IsTH1RegisterRange(uint16_t start_address, uint16_t quantity)
+{
+    uint16_t end_address;
+
+    if (quantity == 0U)
+    {
+        return 0U;
+    }
+
+    end_address = (uint16_t)(start_address + quantity - 1U);
+
+    if ((start_address <= MODBUS_IR_TH1_STATUS) &&
+        (end_address >= MODBUS_IR_TH1_RAW_AVG))
+    {
+        return 1U;
+    }
+
+    return 0U;
 }
 
 static void ModbusProtocol_HandleWriteSingleCoil(void)
@@ -780,6 +894,36 @@ static uint16_t ModbusProtocol_GetInputRegister(uint16_t address)
 
         case MODBUS_IR_COMP_RUN_ELAPSED_SEC:
             return DriverBoard_GetCompressorRunElapsedSec();
+
+        case MODBUS_IR_TH1_RAW_AVG:
+        case MODBUS_IR_TH1_VOLTAGE_MV:
+        case MODBUS_IR_TH1_RESISTANCE_LO:
+        case MODBUS_IR_TH1_RESISTANCE_HI:
+        case MODBUS_IR_TH1_TEMP_0P1C:
+        case MODBUS_IR_TH1_STATUS:
+        {
+            temperature_th1_data_t th1;
+            Temperature_GetTH1Data(&th1);
+
+            switch (address)
+            {
+                case MODBUS_IR_TH1_RAW_AVG:
+                    return th1.raw_average;
+                case MODBUS_IR_TH1_VOLTAGE_MV:
+                    return th1.voltage_mv;
+                case MODBUS_IR_TH1_RESISTANCE_LO:
+                    return (uint16_t)(th1.resistance_ohm & 0xFFFFUL);
+                case MODBUS_IR_TH1_RESISTANCE_HI:
+                    return (uint16_t)((th1.resistance_ohm >> 16U) & 0xFFFFUL);
+                case MODBUS_IR_TH1_TEMP_0P1C:
+                    return (uint16_t)th1.temperature_0p1c;
+                case MODBUS_IR_TH1_STATUS:
+                    return (uint16_t)th1.status;
+                default:
+                    break;
+            }
+        }
+        break;
 
         default:
             break;

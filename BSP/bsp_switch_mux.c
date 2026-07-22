@@ -1,11 +1,10 @@
 #include "bsp_switch_mux.h"
 
 static uint8_t g_switch_mux_selected;
+static uint8_t g_switch_mux_owner;
 
 void BSP_SwitchMux_Init(void)
 {
-    ADPC = 0x05U;
-
     PM4_bit.no2 = 0U;
     PM4_bit.no3 = 0U;
     PM12_bit.no0 = 0U;
@@ -13,7 +12,33 @@ void BSP_SwitchMux_Init(void)
     PM2_bit.no6 = 1U;
 
     g_switch_mux_selected = 0U;
+    g_switch_mux_owner = BSP_SWITCH_MUX_OWNER_NONE;
     BSP_SwitchMux_Select(0U);
+}
+
+uint8_t BSP_SwitchMux_Request(uint8_t owner)
+{
+    if (owner == BSP_SWITCH_MUX_OWNER_NONE)
+    {
+        return 0U;
+    }
+
+    if ((g_switch_mux_owner == BSP_SWITCH_MUX_OWNER_NONE) ||
+        (g_switch_mux_owner == owner))
+    {
+        g_switch_mux_owner = owner;
+        return 1U;
+    }
+
+    return 0U;
+}
+
+void BSP_SwitchMux_Release(uint8_t owner)
+{
+    if (g_switch_mux_owner == owner)
+    {
+        g_switch_mux_owner = BSP_SWITCH_MUX_OWNER_NONE;
+    }
 }
 
 void BSP_SwitchMux_Select(uint8_t channel)
@@ -30,6 +55,11 @@ void BSP_SwitchMux_Select(uint8_t channel)
 uint8_t BSP_SwitchMux_GetSelected(void)
 {
     return g_switch_mux_selected;
+}
+
+uint8_t BSP_SwitchMux_GetOwner(void)
+{
+    return g_switch_mux_owner;
 }
 
 uint8_t BSP_SwitchMux_ReadK1Raw(void)

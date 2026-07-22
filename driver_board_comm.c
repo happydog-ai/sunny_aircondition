@@ -30,6 +30,7 @@ void DriverBoardComm_Task(void)
         g_driver_stop_requested = 0U;
     }
 
+
     if (g_driver_restore_requested != 0U)
     {
         /*

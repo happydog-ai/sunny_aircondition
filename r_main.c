@@ -23,7 +23,7 @@
 * Device(s)    : R5F100LG
 * Tool-Chain   : CCRL
 * Description  : This file implements main function.
-* Creation Date: 2026/7/20
+* Creation Date: 2026/7/22
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -33,6 +33,7 @@ Includes
 #include "r_cg_cgc.h"
 #include "r_cg_port.h"
 #include "r_cg_serial.h"
+#include "r_cg_adc.h"
 #include "r_cg_timer.h"
 #include "r_cg_wdt.h"
 /* Start user code for include. Do not edit comment generated here */
@@ -45,6 +46,7 @@ Includes
 #include "driver_board_comm.h"
 #include "high_pressure_protection.h"
 #include "four_way_valve.h"
+#include "temperature_sensor.h"
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
 
@@ -72,7 +74,6 @@ void main(void)
 {
     R_MAIN_UserInit();
     /* Start user code. Do not edit comment generated here */
-    BSP_RS485_SendString("READY\r\n");
     while (1U)
     {
         uint8_t data;
@@ -90,6 +91,7 @@ void main(void)
         DriverBoardComm_Task();
         HighPressureProtection_Task();
         FourWayValve_Task();
+        Temperature_Task();
         R_WDT_Restart();
     }
 
@@ -140,6 +142,7 @@ void R_MAIN_UserInit(void)
     DriverBoardComm_Init();
     HighPressureProtection_Init();
     FourWayValve_Init();
+    Temperature_Init();
 
     /* End user code. Do not edit comment generated here */
 }

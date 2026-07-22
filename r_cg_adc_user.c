@@ -18,11 +18,11 @@
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
-* File Name    : r_cg_timer_user.c
+* File Name    : r_cg_adc_user.c
 * Version      : CodeGenerator for RL78/G13 V2.05.06.02 [08 Nov 2021]
 * Device(s)    : R5F100LG
 * Tool-Chain   : CCRL
-* Description  : This file implements device driver for TAU module.
+* Description  : This file implements device driver for ADC module.
 * Creation Date: 2026/7/22
 ***********************************************************************************************************************/
 
@@ -30,16 +30,8 @@
 Includes
 ***********************************************************************************************************************/
 #include "r_cg_macrodriver.h"
-#include "r_cg_timer.h"
+#include "r_cg_adc.h"
 /* Start user code for include. Do not edit comment generated here */
-#include "bsp_soft_uart.h"
-#include "protocol.h"
-#include "modbus_protocol.h"
-#include "app_config.h"
-#include "switch_input.h"
-#include "driver_board_comm.h"
-#include "high_pressure_protection.h"
-#include "four_way_valve.h"
 #include "temperature_sensor.h"
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
@@ -47,7 +39,7 @@ Includes
 /***********************************************************************************************************************
 Pragma directive
 ***********************************************************************************************************************/
-#pragma interrupt r_tau0_channel0_interrupt(vect=INTTM00)
+#pragma interrupt r_adc_interrupt(vect=INTAD)
 /* Start user code for pragma. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
 
@@ -55,41 +47,21 @@ Pragma directive
 Global variables and functions
 ***********************************************************************************************************************/
 /* Start user code for global. Do not edit comment generated here */
-
-/*
- * TAU0 Channel 0:
- * Used for LED blinking.
- *
- * TAU0 Channel 1:
- * Used as the software UART time base.
- *
- * Software UART settings:
- * Baud rate          : 9600 bit/s
- * Timer sample rate  : 3 times per bit
- * Timer frequency    : 28800 Hz
- * Timer period       : approximately 34.722 us
- */
 /* End user code. Do not edit comment generated here */
 
 /***********************************************************************************************************************
-* Function Name: r_tau0_channel0_interrupt
-* Description  : This function is INTTM00 interrupt service routine.
+* Function Name: r_adc_interrupt
+* Description  : This function is INTAD interrupt service routine.
 * Arguments    : None
 * Return Value : None
 ***********************************************************************************************************************/
-static void __near r_tau0_channel0_interrupt(void)
+static void __near r_adc_interrupt(void)
 {
     /* Start user code. Do not edit comment generated here */
+    uint16_t adc_result;
 
-    Protocol_TimerTick1ms();
-    ModbusProtocol_TimerTick1ms();
-    AppConfig_TimerTick1ms();
-    SwitchInput_TimerTick1ms();
-    DriverBoardComm_TimerTick1ms();
-    HighPressureProtection_TimerTick1ms();
-    FourWayValve_TimerTick1ms();
-    Temperature_TimerTick1ms();
-
+    R_ADC_Get_Result(&adc_result);
+    Temperature_AdcCompleteNotify(adc_result);
     /* End user code. Do not edit comment generated here */
 }
 

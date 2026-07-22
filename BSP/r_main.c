@@ -72,7 +72,6 @@ void main(void)
 {
     R_MAIN_UserInit();
     /* Start user code. Do not edit comment generated here */
-    BSP_RS485_SendString("READY\r\n");
     while (1U)
     {
         uint8_t data;
