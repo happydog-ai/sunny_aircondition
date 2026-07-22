@@ -15,6 +15,13 @@
 #define APP_CONFIG_SAVE_DELAY_MS    (2000U)
 
 /*
+ * TAU0 channel 0 uses fCLK/512. With fCLK=32MHz, timer clock is 62500Hz.
+ * TDR00=62 gives about 1.008ms. Keep all TimerTick1ms users on a real
+ * millisecond-scale time base.
+ */
+#define APP_SYSTEM_TICK_TDR00_1MS   (62U)
+
+/*
  * TH1 temperature acquisition configuration.
  * ADC: 10-bit, VDD/VSS reference, ANI0 selected by CS+.
  */

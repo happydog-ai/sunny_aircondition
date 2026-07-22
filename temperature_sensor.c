@@ -110,6 +110,12 @@ void Temperature_TimerTick1ms(void)
     {
         g_temp_sample_tick_ms++;
     }
+
+    if ((g_temp_sample_tick_ms >= TEMPERATURE_SAMPLE_PERIOD_MS) &&
+        (g_temp_state == TEMP_STATE_IDLE))
+    {
+        g_force_sample_pending = 1U;
+    }
 }
 
 void Temperature_Task(void)
@@ -117,8 +123,7 @@ void Temperature_Task(void)
     switch (g_temp_state)
     {
         case TEMP_STATE_IDLE:
-            if ((g_force_sample_pending == 0U) &&
-                (g_temp_sample_tick_ms < TEMPERATURE_SAMPLE_PERIOD_MS))
+            if (g_force_sample_pending == 0U)
             {
                 break;
             }

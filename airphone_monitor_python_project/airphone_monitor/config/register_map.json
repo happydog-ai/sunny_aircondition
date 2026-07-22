@@ -1,5 +1,5 @@
 {
-  "poll_interval_ms": 500,
+  "poll_interval_ms": 1000,
   "coils": [
     {
       "name": "system_enable",
@@ -66,14 +66,6 @@
       "address": 16,
       "unit": "V",
       "scale": 0.001
-    },
-    {
-      "name": "ambient_temp",
-      "label": "环境温度",
-      "address": 19,
-      "unit": "℃",
-      "scale": 0.1,
-      "signed": true
     },
     {
       "name": "fan_rpm",
@@ -179,6 +171,25 @@
       "address": 93,
       "minimum": 0,
       "maximum": 65535
+    },
+    {
+      "name": "ambient_temp",
+      "label": "环境温度",
+      "address": 100,
+      "unit": "℃",
+      "scale": 0.1,
+      "signed": true,
+      "writable": false,
+      "minimum": -30,
+      "maximum": 105
+    },
+    {
+      "name": "th1_status",
+      "label": "NTC状态",
+      "address": 101,
+      "writable": false,
+      "minimum": 0,
+      "maximum": 4
     }
   ],
   "holding_registers": [

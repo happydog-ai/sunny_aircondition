@@ -122,6 +122,7 @@ void R_MAIN_UserInit(void)
     /*
      * LED????
      */
+    TDR00 = APP_SYSTEM_TICK_TDR00_1MS;
     R_TAU0_Channel0_Start();
 
     /*

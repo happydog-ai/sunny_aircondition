@@ -100,11 +100,6 @@ static uint16_t g_modbus_rx_length;
 static uint16_t g_modbus_rx_expected_length;
 static volatile uint8_t g_modbus_frame_timeout;
 static uint8_t g_modbus_coils;
-static uint8_t g_modbus_pending_th1_response;
-static volatile uint16_t g_modbus_pending_th1_timeout_ms;
-static uint16_t g_modbus_pending_th1_start_address;
-static uint16_t g_modbus_pending_th1_quantity;
-static uint16_t g_modbus_pending_th1_sequence;
 
 volatile uint8_t g_modbus_debug_rx_frame[MODBUS_RX_BUFFER_SIZE];
 volatile uint16_t g_modbus_debug_rx_length;
@@ -124,7 +119,6 @@ static void ModbusProtocol_HandleReadDiscreteInputs(void);
 static void ModbusProtocol_HandleReadHoldingRegisters(void);
 static void ModbusProtocol_HandleReadInputRegisters(void);
 static void ModbusProtocol_SendInputRegisterResponse(uint16_t start_address, uint16_t quantity);
-static uint8_t ModbusProtocol_IsTH1RegisterRange(uint16_t start_address, uint16_t quantity);
 static void ModbusProtocol_HandleWriteSingleCoil(void);
 static void ModbusProtocol_HandleWriteSingleRegister(void);
 static void ModbusProtocol_HandleWriteMultipleRegisters(void);
@@ -151,26 +145,11 @@ void ModbusProtocol_Init(void)
         g_modbus_coils |= (uint8_t)(1U << MODBUS_COIL_SYSTEM_ENABLE);
     }
     ModbusProtocol_ApplyLedOutput(ModbusProtocol_GetLedStatus());
-    g_modbus_pending_th1_response = 0U;
-    g_modbus_pending_th1_timeout_ms = 0U;
     ModbusProtocol_ResetRx();
 }
 
 void ModbusProtocol_Task(void)
 {
-    if (g_modbus_pending_th1_response != 0U)
-    {
-        if ((Temperature_GetTH1SampleSequence() != g_modbus_pending_th1_sequence) ||
-            (g_modbus_pending_th1_timeout_ms == 0U))
-        {
-            ModbusProtocol_SendInputRegisterResponse(
-                g_modbus_pending_th1_start_address,
-                g_modbus_pending_th1_quantity);
-            g_modbus_pending_th1_response = 0U;
-        }
-        return;
-    }
-
     if ((g_modbus_rx_length > 0U) &&
         ((g_modbus_frame_timeout == 0U) ||
          ((g_modbus_rx_expected_length > 0U) &&
@@ -204,10 +183,6 @@ void ModbusProtocol_TimerTick1ms(void)
         g_modbus_frame_timeout--;
     }
 
-    if (g_modbus_pending_th1_timeout_ms > 0U)
-    {
-        g_modbus_pending_th1_timeout_ms--;
-    }
 }
 
 static void ModbusProtocol_ResetRx(void)
@@ -522,17 +497,6 @@ static void ModbusProtocol_HandleReadInputRegisters(void)
         return;
     }
 
-    if (ModbusProtocol_IsTH1RegisterRange(start_address, quantity) != 0U)
-    {
-        g_modbus_pending_th1_start_address = start_address;
-        g_modbus_pending_th1_quantity = quantity;
-        g_modbus_pending_th1_sequence = Temperature_GetTH1SampleSequence();
-        g_modbus_pending_th1_response = 1U;
-        g_modbus_pending_th1_timeout_ms = 100U;
-        (void)Temperature_RequestTH1Sample();
-        return;
-    }
-
     ModbusProtocol_SendInputRegisterResponse(start_address, quantity);
 }
 
@@ -554,26 +518,6 @@ static void ModbusProtocol_SendInputRegisterResponse(uint16_t start_address, uin
     }
 
     ModbusProtocol_SendFrame(response, (uint16_t)(3U + (quantity * 2U)));
-}
-
-static uint8_t ModbusProtocol_IsTH1RegisterRange(uint16_t start_address, uint16_t quantity)
-{
-    uint16_t end_address;
-
-    if (quantity == 0U)
-    {
-        return 0U;
-    }
-
-    end_address = (uint16_t)(start_address + quantity - 1U);
-
-    if ((start_address <= MODBUS_IR_TH1_STATUS) &&
-        (end_address >= MODBUS_IR_TH1_RAW_AVG))
-    {
-        return 1U;
-    }
-
-    return 0U;
 }
 
 static void ModbusProtocol_HandleWriteSingleCoil(void)
