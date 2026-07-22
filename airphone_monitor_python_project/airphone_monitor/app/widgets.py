@@ -3,21 +3,41 @@ from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
 
 
 class ValueCard(QFrame):
-    def __init__(self, title: str, unit: str = "", parent=None) -> None:
+    def __init__(self, title: str, unit: str = "", value_color: str = "#2563EB", parent=None) -> None:
         super().__init__(parent)
         self.unit = unit
-        self.setFrameShape(QFrame.Shape.StyledPanel)
-        self.setMinimumSize(140, 90)
-        layout = QVBoxLayout(self)
-        title_label = QLabel(title)
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.value_label = QLabel("--")
-        self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.value_label.setStyleSheet("font-size:23px;font-weight:600;color:#1769aa;")
-        layout.addWidget(title_label); layout.addWidget(self.value_label)
+        self._value_color = value_color
+        self.setObjectName("valueCard")
+        self.setMinimumSize(150, 100)
+        self.setMaximumHeight(120)
 
-    def set_value(self, value) -> None:
-        if value is None: text = "--"
-        elif isinstance(value, bool): text = "开启" if value else "关闭"
-        else: text = f"{value}{' ' + self.unit if self.unit else ''}"
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 14, 16, 14)
+        layout.setSpacing(6)
+
+        self.title_label = QLabel(title)
+        self.title_label.setObjectName("cardTitle")
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        self.value_label = QLabel("--")
+        self.value_label.setObjectName("cardValue")
+        self.value_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.value_label.setStyleSheet(
+            f"font-size:26px;font-weight:700;color:{value_color};"
+        )
+
+        layout.addWidget(self.title_label)
+        layout.addWidget(self.value_label)
+
+    def set_value(self, value, color: str | None = None) -> None:
+        if value is None:
+            text = "--"
+        elif isinstance(value, bool):
+            text = "开启" if value else "关闭"
+        else:
+            text = f"{value}{' ' + self.unit if self.unit else ''}"
         self.value_label.setText(text)
+        if color is not None:
+            self.value_label.setStyleSheet(
+                f"font-size:26px;font-weight:700;color:{color};"
+            )
