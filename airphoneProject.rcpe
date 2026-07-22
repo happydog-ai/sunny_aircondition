@@ -38,6 +38,24 @@
         <Path>BSP\bsp_soft_uart.h</Path>
         <Path>protocol.c</Path>
         <Path>protocol.h</Path>
+        <Path>BSP\app_config.h</Path>
+        <Path>BSP\bsp_bl24c16.c</Path>
+        <Path>BSP\bsp_bl24c16.h</Path>
+        <Path>BSP\bsp_relay.c</Path>
+        <Path>BSP\bsp_switch_mux.c</Path>
+        <Path>driver_board_comm.c</Path>
+        <Path>driver_board_comm.h</Path>
+        <Path>four_way_valve.c</Path>
+        <Path>four_way_valve.h</Path>
+        <Path>high_pressure_protection.c</Path>
+        <Path>high_pressure_protection.h</Path>
+        <Path>switch_input.c</Path>
+        <Path>switch_input.h</Path>
+        <Path>app_config.c</Path>
+        <Path>app_config.h</Path>
+      </Category>
+      <Category Name="protocol">
+        <Path>modbus_protocol.c</Path>
       </Category>
     </Files>
     <DebugOptions>
@@ -67,6 +85,15 @@
           <Path>DefaultBuild\r_cg_serial.obj</Path>
           <Path>DefaultBuild\r_cg_serial_user.obj</Path>
           <Path>DefaultBuild\protocol.obj</Path>
+          <Path>DefaultBuild\modbus_protocol.obj</Path>
+          <Path>DefaultBuild\bsp_bl24c16.obj</Path>
+          <Path>DefaultBuild\bsp_relay.obj</Path>
+          <Path>DefaultBuild\bsp_switch_mux.obj</Path>
+          <Path>DefaultBuild\driver_board_comm.obj</Path>
+          <Path>DefaultBuild\four_way_valve.obj</Path>
+          <Path>DefaultBuild\high_pressure_protection.obj</Path>
+          <Path>DefaultBuild\switch_input.obj</Path>
+          <Path>DefaultBuild\app_config.obj</Path>
         </LinkOrder>
         <CommonOptions>
           <IncludePathForC>BSP</IncludePathForC>
@@ -197,8 +224,8 @@
       &lt;/Effect&gt;
     &lt;/RTCLPC&gt;
     &lt;VDD Name="VDD" Text="false" Comment="used" /&gt;
-    &lt;AD_ADPC_USEDPIN Name="AD_ADPC_USEDPIN" Text="false" /&gt;
-    &lt;ADC_ADS_VALUE Name="ADC_ADS_VALUE" Text="false" /&gt;
+    &lt;AD_ADPC_USEDPIN Name="AD_ADPC_USEDPIN" Text="" /&gt;
+    &lt;ADC_ADS_VALUE Name="ADC_ADS_VALUE" Text="" /&gt;
     &lt;IIC00 Name="IIC00" Text="false" Comment="unused" Trigger="IIC00"&gt;
       &lt;Effect&gt;
         &lt;PORT Forcible="" /&gt;
@@ -273,6 +300,7 @@
     &lt;RAMEndAddress Name="RAMEndAddress" Fixed="" Text="000FFEFF" /&gt;
     &lt;ROMEndAddress Chip="R5F100AG,R5F100BG,R5F100CG,R5F100EG,R5F100FG,R5F100GG,R5F100JG,R5F100LG,R5F100MG,R5F100PG" Name="ROMEndAddress" Fixed="" Text="0001FFFF" /&gt;
     &lt;MirrorROM Chip="R5F100AG,R5F100BG,R5F100CG,R5F100EG,R5F100FG,R5F100GG,R5F100JG,R5F100LG,R5F100MG,R5F100PG,R5F101AG,R5F101BG,R5F101CG,R5F101EG,R5F101FG,R5F101GG,R5F101JG,R5F101LG,R5F101MG,R5F101PG" Name="MirrorROM" Fixed="" Text="39.75" /&gt;
+    &lt;ADPC_AD Name="ADPC_AD" Value="-1" /&gt;
     &lt;CodePath Name="CodePath" Text=".\" /&gt;
     &lt;ReportType Name="ReportType" Text="Html" /&gt;
     &lt;CreationDateType Name="CreationDateType" Text="OutputDate" /&gt;
@@ -332,8 +360,8 @@
           &lt;P22 Name="P22/ANI2" AltFunc="" Point="I/O" /&gt;
           &lt;P23 Chip="RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P23/ANI3" AltFunc="" Point="I/O" /&gt;
           &lt;P24 Chip="RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P24/ANI4" AltFunc="" Point="I/O" /&gt;
-          &lt;P25 Chip="RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P25/ANI5" AltFunc="" Point="I/O" /&gt;
-          &lt;P26 Chip="RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P26/ANI6" AltFunc="" Point="I/O" /&gt;
+          &lt;P25 Chip="RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P25/ANI5" AltFunc="P25" Point="I/O" /&gt;
+          &lt;P26 Chip="RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P26/ANI6" AltFunc="P26" Point="I/O" /&gt;
           &lt;P27 Chip="RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P27/ANI7" AltFunc="" Point="I/O" /&gt;
         &lt;/Port2&gt;
         &lt;Port3 Pullup="true"&gt;
@@ -343,8 +371,8 @@
         &lt;Port4 Pullup="true"&gt;
           &lt;P40 Name="P40/TOOL0" AltFunc="TOOL0" Point="I/O" /&gt;
           &lt;P41 Chip="RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin" Name="P41/TI07/TO07" AltFunc="" Point="I/O" /&gt;
-          &lt;P42 Chip="RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P42/TI04/TO04" AltFunc="" Point="I/O" /&gt;
-          &lt;P43 Chip="RL78G13_64pin" Name="P43" AltFunc="" Point="I/O" /&gt;
+          &lt;P42 Chip="RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P42/TI04/TO04" AltFunc="P42" Point="I/O" /&gt;
+          &lt;P43 Chip="RL78G13_64pin" Name="P43" AltFunc="P43" Point="I/O" /&gt;
         &lt;/Port4&gt;
         &lt;Port5 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Pullup="true"&gt;
           &lt;P50 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin" Nch="true" Name="P50/INTP1/SI11/SDA11" AltFunc="" Point="I/O" /&gt;
@@ -355,8 +383,8 @@
           &lt;P55 Chip="RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" TTL="true" Nch="true" Name="P55" AltFunc="" Point="I/O" /&gt;
         &lt;/Port5&gt;
         &lt;Port6 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin"&gt;
-          &lt;P60 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P60/SCLA0" AltFunc="" Point="I/O" /&gt;
-          &lt;P61 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P61/SDAA0" AltFunc="" Point="I/O" /&gt;
+          &lt;P60 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P60/SCLA0" AltFunc="SCLA0" Point="I/O" /&gt;
+          &lt;P61 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P61/SDAA0" AltFunc="SDAA0" Point="I/O" /&gt;
           &lt;P62 Chip="RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin" Name="P62" AltFunc="" Point="I/O" /&gt;
           &lt;P63 Chip="RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin" Name="P63" AltFunc="" Point="I/O" /&gt;
         &lt;/Port6&gt;
@@ -371,7 +399,7 @@
           &lt;P77 Chip="RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P77/KR7/INTP11" AltFunc="P77" Point="I/O" /&gt;
         &lt;/Port7&gt;
         &lt;Port12&gt;
-          &lt;P120 Chip="RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P120/ANI19" DIN="true" Pullup="true" AltFunc="" Point="I/O" /&gt;
+          &lt;P120 Chip="RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P120/ANI19" DIN="true" Pullup="true" AltFunc="P120" Point="I/O" /&gt;
           &lt;P121 Name="P121/X1" AltFunc="" Point="I" /&gt;
           &lt;P122 Name="P122/X2/EXCLK" AltFunc="" Point="I" /&gt;
           &lt;P123 Chip="RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" Name="P123/XT1" AltFunc="" Point="I" /&gt;
@@ -624,7 +652,7 @@
           &lt;INTIIC31 InUse="0" ISR="r_iic31_interrupt" /&gt;
         &lt;/SAU1&gt;
         &lt;IICA0&gt;
-          &lt;INTIICA0 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" InUse="0" ISR="r_iica0_interrupt" /&gt;
+          &lt;INTIICA0 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" InUse="1" ISR="r_iica0_interrupt" /&gt;
         &lt;/IICA0&gt;
         &lt;IICA1&gt;
         &lt;/IICA1&gt;
@@ -1008,13 +1036,13 @@
             &lt;/IIC21&gt;
           &lt;/SAU1&gt;
           &lt;IICA0 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" InUse=""&gt;
-            &lt;R_IICA0_Create UserName="R_IICA0_Create" LibName="R_IICAn_Create" InUse="0" Init="1" InitMode="" /&gt;
-            &lt;R_IICA0_Master_Send UserName="R_IICA0_Master_Send" LibName="R_IICAn_Master_Send" InUse="0" /&gt;
-            &lt;R_IICA0_Master_Receive UserName="R_IICA0_Master_Receive" LibName="R_IICAn_Master_Receive" InUse="0" /&gt;
+            &lt;R_IICA0_Create UserName="R_IICA0_Create" LibName="R_IICAn_Create" InUse="1" Init="1" InitMode="" /&gt;
+            &lt;R_IICA0_Master_Send UserName="R_IICA0_Master_Send" LibName="R_IICAn_Master_Send" InUse="1" /&gt;
+            &lt;R_IICA0_Master_Receive UserName="R_IICA0_Master_Receive" LibName="R_IICAn_Master_Receive" InUse="1" /&gt;
             &lt;R_IICA0_Slave_Send UserName="R_IICA0_Slave_Send" LibName="R_IICAn_Slave_Send" InUse="0" /&gt;
             &lt;R_IICA0_Slave_Receive UserName="R_IICA0_Slave_Receive" LibName="R_IICAn_Slave_Receive" InUse="0" /&gt;
-            &lt;R_IICA0_Stop UserName="R_IICA0_Stop" LibName="R_IICAn_Stop" InUse="0" /&gt;
-            &lt;R_IICA0_StopCondition UserName="R_IICA0_StopCondition" LibName="R_IICAn_StopCondition" InUse="0" /&gt;
+            &lt;R_IICA0_Stop UserName="R_IICA0_Stop" LibName="R_IICAn_Stop" InUse="1" /&gt;
+            &lt;R_IICA0_StopCondition UserName="R_IICA0_StopCondition" LibName="R_IICAn_StopCondition" InUse="1" /&gt;
             &lt;R_IICA0_Set_SnoozeOn UserName="R_IICA0_Set_SnoozeOn" LibName="R_IICAn_Set_SnoozeOn" InUse="0" /&gt;
             &lt;R_IICA0_Set_SnoozeOff UserName="R_IICA0_Set_SnoozeOff" LibName="R_IICAn_Set_SnoozeOff" InUse="0" /&gt;
             &lt;R_IICA0_Set_PowerOff UserName="R_IICA0_Set_PowerOff" LibName="R_IICAn_Set_PowerOff" InUse="0" /&gt;
@@ -1129,12 +1157,12 @@
           &lt;/SAU1&gt;
           &lt;IICA0 Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" InUse=""&gt;
             &lt;R_IICA0_Create_UserInit UserName="R_IICA0_Create_UserInit" LibName="R_IICAn_Create_UserInit" InUse="0" /&gt;
-            &lt;r_iica0_interrupt UserName="r_iica0_interrupt" INTHandle="" LibName="r_iican_interrupt" InUse="0" /&gt;
-            &lt;r_iica0_callback_master_sendend UserName="r_iica0_callback_master_sendend" LibName="r_iican_callback_master_sendend" InUse="0" /&gt;
-            &lt;r_iica0_callback_master_receiveend UserName="r_iica0_callback_master_receiveend" LibName="r_iican_callback_master_receiveend" InUse="0" /&gt;
+            &lt;r_iica0_interrupt UserName="r_iica0_interrupt" INTHandle="" LibName="r_iican_interrupt" InUse="1" /&gt;
+            &lt;r_iica0_callback_master_sendend UserName="r_iica0_callback_master_sendend" LibName="r_iican_callback_master_sendend" InUse="1" /&gt;
+            &lt;r_iica0_callback_master_receiveend UserName="r_iica0_callback_master_receiveend" LibName="r_iican_callback_master_receiveend" InUse="1" /&gt;
             &lt;r_iica0_callback_slave_sendend UserName="r_iica0_callback_slave_sendend" LibName="r_iican_callback_slave_sendend" InUse="0" /&gt;
             &lt;r_iica0_callback_slave_receiveend UserName="r_iica0_callback_slave_receiveend" LibName="r_iican_callback_slave_receiveend" InUse="0" /&gt;
-            &lt;r_iica0_callback_master_error UserName="r_iica0_callback_master_error" LibName="r_iican_callback_master_error" InUse="0" /&gt;
+            &lt;r_iica0_callback_master_error UserName="r_iica0_callback_master_error" LibName="r_iican_callback_master_error" InUse="1" /&gt;
             &lt;r_iica0_callback_slave_error UserName="r_iica0_callback_slave_error" LibName="r_iican_callback_slave_error" InUse="0" /&gt;
             &lt;r_iica0_callback_getstopcondition UserName="r_iica0_callback_getstopcondition" LibName="r_iican_callback_getstopcondition" InUse="0" /&gt;
           &lt;/IICA0&gt;
@@ -1142,27 +1170,27 @@
         &lt;r_cg_serial.h UserName="r_cg_serial.h" LibName=".h" InUse="1" /&gt;
       &lt;/Serial&gt;
       &lt;ADC&gt;
-        &lt;r_cg_adc.c UserName="r_cg_adc.c" LibName=".c" InUse=""&gt;
+        &lt;r_cg_adc.c UserName="r_cg_adc.c" LibName=".c" InUse="0"&gt;
           &lt;Type R_ADC_Create="void R_ADC_Create(void)" R_ADC_Start="void R_ADC_Start(void)" R_ADC_Stop="void R_ADC_Stop(void)" R_ADC_Set_OperationOn="void R_ADC_Set_OperationOn(void)" R_ADC_Set_OperationOff="void R_ADC_Set_OperationOff(void)" R_ADC_Get_Result="void R_ADC_Get_Result(uint16_t * const buffer)" R_ADC_Get_Result_8bit="void R_ADC_Get_Result_8bit(uint8_t * const buffer)" R_ADC_Set_ADChannel="MD_STATUS R_ADC_Set_ADChannel(ad_channel_t channel)" R_ADC_Set_SnoozeOn="void R_ADC_Set_SnoozeOn(void)" R_ADC_Set_SnoozeOff="void R_ADC_Set_SnoozeOff(void)" R_ADC_Set_TestChannel="MD_STATUS R_ADC_Set_TestChannel(test_channel_t channel)" R_ADC_Set_PowerOff="void R_ADC_Set_PowerOff(void)" /&gt;
-          &lt;R_ADC_Create UserName="R_ADC_Create" LibName="R_ADC_Create" InUse="" Init="1" InitMode="" /&gt;
-          &lt;R_ADC_Start UserName="R_ADC_Start" LibName="R_ADC_Start" InUse="" /&gt;
-          &lt;R_ADC_Stop UserName="R_ADC_Stop" LibName="R_ADC_Stop" InUse="" /&gt;
-          &lt;R_ADC_Set_OperationOn UserName="R_ADC_Set_OperationOn" LibName="R_ADC_Set_OperationOn" InUse="" /&gt;
-          &lt;R_ADC_Set_OperationOff UserName="R_ADC_Set_OperationOff" LibName="R_ADC_Set_OperationOff" InUse="" /&gt;
-          &lt;R_ADC_Get_Result UserName="R_ADC_Get_Result" LibName="R_ADC_Get_Result" InUse="" /&gt;
-          &lt;R_ADC_Get_Result_8bit UserName="R_ADC_Get_Result_8bit" LibName="R_ADC_Get_Result_8bit" InUse="" /&gt;
-          &lt;R_ADC_Set_ADChannel UserName="R_ADC_Set_ADChannel" LibName="R_ADC_Set_ADChannel" InUse="" /&gt;
-          &lt;R_ADC_Set_SnoozeOn UserName="R_ADC_Set_SnoozeOn" LibName="R_ADC_Set_SnoozeOn" InUse="" /&gt;
-          &lt;R_ADC_Set_SnoozeOff UserName="R_ADC_Set_SnoozeOff" LibName="R_ADC_Set_SnoozeOff" InUse="" /&gt;
-          &lt;R_ADC_Set_TestChannel UserName="R_ADC_Set_TestChannel" LibName="R_ADC_Set_TestChannel" InUse="" /&gt;
-          &lt;R_ADC_Set_PowerOff UserName="R_ADC_Set_PowerOff" LibName="R_ADC_Set_PowerOff" InUse="" /&gt;
+          &lt;R_ADC_Create UserName="R_ADC_Create" LibName="R_ADC_Create" InUse="0" Init="1" InitMode="" /&gt;
+          &lt;R_ADC_Start UserName="R_ADC_Start" LibName="R_ADC_Start" InUse="0" /&gt;
+          &lt;R_ADC_Stop UserName="R_ADC_Stop" LibName="R_ADC_Stop" InUse="0" /&gt;
+          &lt;R_ADC_Set_OperationOn UserName="R_ADC_Set_OperationOn" LibName="R_ADC_Set_OperationOn" InUse="0" /&gt;
+          &lt;R_ADC_Set_OperationOff UserName="R_ADC_Set_OperationOff" LibName="R_ADC_Set_OperationOff" InUse="0" /&gt;
+          &lt;R_ADC_Get_Result UserName="R_ADC_Get_Result" LibName="R_ADC_Get_Result" InUse="0" /&gt;
+          &lt;R_ADC_Get_Result_8bit UserName="R_ADC_Get_Result_8bit" LibName="R_ADC_Get_Result_8bit" InUse="0" /&gt;
+          &lt;R_ADC_Set_ADChannel UserName="R_ADC_Set_ADChannel" LibName="R_ADC_Set_ADChannel" InUse="0" /&gt;
+          &lt;R_ADC_Set_SnoozeOn UserName="R_ADC_Set_SnoozeOn" LibName="R_ADC_Set_SnoozeOn" InUse="0" /&gt;
+          &lt;R_ADC_Set_SnoozeOff UserName="R_ADC_Set_SnoozeOff" LibName="R_ADC_Set_SnoozeOff" InUse="0" /&gt;
+          &lt;R_ADC_Set_TestChannel UserName="R_ADC_Set_TestChannel" LibName="R_ADC_Set_TestChannel" InUse="0" /&gt;
+          &lt;R_ADC_Set_PowerOff UserName="R_ADC_Set_PowerOff" LibName="R_ADC_Set_PowerOff" InUse="0" /&gt;
         &lt;/r_cg_adc.c&gt;
-        &lt;r_cg_adc_user.c UserName="r_cg_adc_user.c" LibName="_user.c" InUse=""&gt;
+        &lt;r_cg_adc_user.c UserName="r_cg_adc_user.c" LibName="_user.c" InUse="0"&gt;
           &lt;Type R_ADC_Create_UserInit="void R_ADC_Create_UserInit(void)" r_adc_interrupt="__interrupt static void r_adc_interrupt(void)" /&gt;
-          &lt;R_ADC_Create_UserInit UserName="R_ADC_Create_UserInit" LibName="R_ADC_Create_UserInit" InUse="" /&gt;
-          &lt;r_adc_interrupt UserName="r_adc_interrupt" INTHandle="" LibName="r_adc_interrupt" InUse="" /&gt;
+          &lt;R_ADC_Create_UserInit UserName="R_ADC_Create_UserInit" LibName="R_ADC_Create_UserInit" InUse="0" /&gt;
+          &lt;r_adc_interrupt UserName="r_adc_interrupt" INTHandle="" LibName="r_adc_interrupt" InUse="0" /&gt;
         &lt;/r_cg_adc_user.c&gt;
-        &lt;r_cg_adc.h UserName="r_cg_adc.h" LibName=".h" InUse="" /&gt;
+        &lt;r_cg_adc.h UserName="r_cg_adc.h" LibName=".h" InUse="0" /&gt;
       &lt;/ADC&gt;
       &lt;TAU&gt;
         &lt;r_cg_timer.c UserName="r_cg_timer.c" LibName=".c" InUse="1"&gt;
@@ -1388,23 +1416,23 @@
         &lt;cg_security7 Name="cg_security7" Value="00" /&gt;
         &lt;cg_security5 Name="cg_security5" Value="00" /&gt;
         &lt;cg_crc_area Name="cg_crc_area" Value="00" /&gt;
-        &lt;rrm Name="rrm" Value="1FE00" /&gt;
         &lt;cg_security3 Name="cg_security3" Value="00" /&gt;
         &lt;cg_security0 Name="cg_security0" Value="00" /&gt;
         &lt;cg_security1 Name="cg_security1" Value="00" /&gt;
-        &lt;cg_ocd_ram_size Name="cg_ocd_ram_size" Value="512" /&gt;
         &lt;clock_option Name="clock_option" Value="E8" /&gt;
+        &lt;lvi_option Name="lvi_option" Value="F3" /&gt;
+        &lt;cg_security2 Name="cg_security2" Value="00" /&gt;
         &lt;pior_value Name="pior_value" Value="00" /&gt;
         &lt;cg_option Name="cg_option" Value="84" /&gt;
         &lt;cg_security8 Name="cg_security8" Value="00" /&gt;
         &lt;cg_security6 Name="cg_security6" Value="00" /&gt;
         &lt;ocdstart Name="ocdstart" Value="1FE00" /&gt;
         &lt;cg_onchip Name="cg_onchip" Value="" /&gt;
-        &lt;cg_security2 Name="cg_security2" Value="00" /&gt;
-        &lt;cg_iawctl_value Name="cg_iawctl_value" Value="00" /&gt;
-        &lt;lvi_option Name="lvi_option" Value="F3" /&gt;
-        &lt;wdt_option Name="wdt_option" Value="FF" /&gt;
         &lt;cg_security4 Name="cg_security4" Value="00" /&gt;
+        &lt;cg_iawctl_value Name="cg_iawctl_value" Value="00" /&gt;
+        &lt;cg_ocd_ram_size Name="cg_ocd_ram_size" Value="512" /&gt;
+        &lt;wdt_option Name="wdt_option" Value="FF" /&gt;
+        &lt;rrm Name="rrm" Value="1FE00" /&gt;
       &lt;/GlobleUserTag&gt;
     &lt;/TAG&gt;
   &lt;/DIR&gt;
@@ -1430,10 +1458,10 @@
         &lt;Channel0 Chip="RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" PIOR1="0" UART="2" CSI="20" IIC="20" Channel="0" /&gt;
         &lt;Channel1 Chip="RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" UART="2" CSI="21" IIC="21" Channel="1" /&gt;
       &lt;/SAU1&gt;
-      &lt;IICA0 Accelerate="No" Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" MacroName="IICA" Channel="0" SetFlag="False" TabEnable="True" /&gt;
+      &lt;IICA0 Accelerate="No" Chip="RL78G13_24pin,RL78G13_25pin,RL78G13_30pin,RL78G13_32pin,RL78G13_36pin,RL78G13_40pin,RL78G13_44pin,RL78G13_48pin,RL78G13_52pin,RL78G13_64pin,RL78G13_80pin,RL78G13_100pin,RL78G13_128pin" MacroName="IICA" Channel="0" SetFlag="True" TabEnable="True" /&gt;
     &lt;/Serial&gt;
-    &lt;ADC SetFlag="" HelpID="adc" NeedRefresh="False"&gt;
-      &lt;ADC SetFlag="" MacroName="ADC" /&gt;
+    &lt;ADC SetFlag="False" HelpID="adc" NeedRefresh="False"&gt;
+      &lt;ADC SetFlag="False" MacroName="ADC" /&gt;
     &lt;/ADC&gt;
     &lt;TAU SetFlag="True" HelpID="timer" NeedRefresh="False"&gt;
       &lt;TAU0 Accelerate="No" MacroName="TAU" Channel="0" ChannelNum="0,1,2,3,4,5,6,7" SetFlag="True" /&gt;
@@ -1763,14 +1791,14 @@
           &lt;setting name="Output_value" value="0" /&gt;
         &lt;/P24&gt;
         &lt;P25&gt;
-          &lt;setting name="Operation" value="unused" /&gt;
+          &lt;setting name="Operation" value="input" /&gt;
           &lt;setting name="Pull_up" value="unused" /&gt;
           &lt;setting name="TTL_buffer" value="unused" /&gt;
           &lt;setting name="N-ch_open-drain" value="unused" /&gt;
           &lt;setting name="Output_value" value="0" /&gt;
         &lt;/P25&gt;
         &lt;P26&gt;
-          &lt;setting name="Operation" value="unused" /&gt;
+          &lt;setting name="Operation" value="input" /&gt;
           &lt;setting name="Pull_up" value="unused" /&gt;
           &lt;setting name="TTL_buffer" value="unused" /&gt;
           &lt;setting name="N-ch_open-drain" value="unused" /&gt;
@@ -1816,14 +1844,14 @@
           &lt;setting name="Output_value" value="0" /&gt;
         &lt;/P41&gt;
         &lt;P42&gt;
-          &lt;setting name="Operation" value="unused" /&gt;
+          &lt;setting name="Operation" value="output" /&gt;
           &lt;setting name="Pull_up" value="unused" /&gt;
           &lt;setting name="TTL_buffer" value="unused" /&gt;
           &lt;setting name="N-ch_open-drain" value="unused" /&gt;
           &lt;setting name="Output_value" value="0" /&gt;
         &lt;/P42&gt;
         &lt;P43&gt;
-          &lt;setting name="Operation" value="unused" /&gt;
+          &lt;setting name="Operation" value="output" /&gt;
           &lt;setting name="Pull_up" value="unused" /&gt;
           &lt;setting name="TTL_buffer" value="unused" /&gt;
           &lt;setting name="N-ch_open-drain" value="unused" /&gt;
@@ -1876,6 +1904,7 @@
       &lt;/PortP5&gt;
       &lt;PortP6&gt;
         &lt;P60&gt;
+          &lt;setting name="IIC_STATUS" value="used" /&gt;
           &lt;setting name="Operation" value="unused" /&gt;
           &lt;setting name="Pull_up" value="unused" /&gt;
           &lt;setting name="TTL_buffer" value="unused" /&gt;
@@ -1883,6 +1912,7 @@
           &lt;setting name="Output_value" value="0" /&gt;
         &lt;/P60&gt;
         &lt;P61&gt;
+          &lt;setting name="IIC_STATUS" value="used" /&gt;
           &lt;setting name="Operation" value="unused" /&gt;
           &lt;setting name="Pull_up" value="unused" /&gt;
           &lt;setting name="TTL_buffer" value="unused" /&gt;
@@ -1964,7 +1994,7 @@
       &lt;/PortP7&gt;
       &lt;PortP12&gt;
         &lt;P120&gt;
-          &lt;setting name="Operation" value="unused" /&gt;
+          &lt;setting name="Operation" value="output" /&gt;
           &lt;setting name="Pull_up" value="unused" /&gt;
           &lt;setting name="TTL_buffer" value="unused" /&gt;
           &lt;setting name="N-ch_open-drain" value="unused" /&gt;
@@ -2103,6 +2133,13 @@
       &lt;Channel0&gt;
         &lt;setting name="Channel_function_-i" value="0" /&gt;
         &lt;setting name="Detail_function_-i" value="-1" /&gt;
+        &lt;IIC00&gt;
+          &lt;setting name="TransferSpeed" value="100000" /&gt;
+          &lt;setting name="Interrupt_priority" value="3" /&gt;
+          &lt;setting name="Master_receive_end_callback_function" value="generated" /&gt;
+          &lt;setting name="Master_transmit_end_callback_function" value="generated" /&gt;
+          &lt;setting name="Master_error_callback_function" value="generated" /&gt;
+        &lt;/IIC00&gt;
       &lt;/Channel0&gt;
       &lt;IIC01 /&gt;
       &lt;CSI01 /&gt;
@@ -2182,7 +2219,19 @@
       &lt;CSI21 /&gt;
     &lt;/SAU1&gt;
     &lt;IICA0&gt;
-      &lt;setting name="Mode" value="Unused" /&gt;
+      &lt;setting name="TransferMode" value="Master" /&gt;
+      &lt;Master0&gt;
+        &lt;setting name="ClockSetting" value="fCLKHalf" /&gt;
+        &lt;setting name="SlaveAddress" value="16" /&gt;
+        &lt;setting name="Transfer_speed" value="standard" /&gt;
+        &lt;setting name="Transfer_rate" value="100000" /&gt;
+        &lt;setting name="Digital_filter" value="unused" /&gt;
+        &lt;setting name="Interrupt_Priority" value="3" /&gt;
+        &lt;setting name="Master_receive_end_callback_function" value="generated" /&gt;
+        &lt;setting name="Master_transmit_end_callback_function" value="generated" /&gt;
+        &lt;setting name="Master_error_end_callback_function" value="generated" /&gt;
+        &lt;setting name="StopBit" value="not generated" /&gt;
+      &lt;/Master0&gt;
     &lt;/IICA0&gt;
     &lt;ADC&gt;
       &lt;setting name="AD_convertion" value="unused" /&gt;
@@ -2195,8 +2244,8 @@
       &lt;setting name="Mode" value="CONSELECT" /&gt;
       &lt;setting name="InputPins" value="0" /&gt;
       &lt;setting name="InputPinsAttach" value="ANI0 - ANI7" /&gt;
-      &lt;setting name="AD_Inputpin16" value="used" /&gt;
-      &lt;setting name="AD_Inputpin17" value="used" /&gt;
+      &lt;setting name="AD_Inputpin16" value="unused" /&gt;
+      &lt;setting name="AD_Inputpin17" value="unused" /&gt;
       &lt;setting name="AD_Inputpin18" value="used" /&gt;
       &lt;setting name="AD_Inputpin19" value="used" /&gt;
       &lt;setting name="AD_Inputpin20" value="unused" /&gt;
