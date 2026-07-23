@@ -3,7 +3,7 @@
 
 #include "r_cg_macrodriver.h"
 
-#define EEV_DEFAULT_STEP_INTERVAL_MS (50U)
+#define EEV_DEFAULT_STEP_INTERVAL_MS (15U)
 #define EEV_MIN_STEP_INTERVAL_MS     (2U)
 #define EEV_MAX_STEP_INTERVAL_MS     (100U)
 #define EEV_MAX_STEPS              (4096U)

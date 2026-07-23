@@ -246,6 +246,39 @@
       "writable": false,
       "minimum": 0,
       "maximum": 4
+    },
+    {
+      "name": "eev_current_step",
+      "label": "电子膨胀阀当前位置",
+      "address": 112,
+      "writable": false,
+      "minimum": 0,
+      "maximum": 4096
+    },
+    {
+      "name": "eev_busy",
+      "label": "电子膨胀阀运行状态",
+      "address": 113,
+      "writable": false,
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "name": "eev_target_step",
+      "label": "电子膨胀阀目标位置",
+      "address": 114,
+      "writable": false,
+      "minimum": 0,
+      "maximum": 4096
+    },
+    {
+      "name": "eev_interval_ms",
+      "label": "电子膨胀阀速度",
+      "address": 115,
+      "unit": "ms/step",
+      "writable": false,
+      "minimum": 2,
+      "maximum": 100
     }
   ],
   "holding_registers": [
@@ -363,6 +396,39 @@
       "writable": false,
       "minimum": 0,
       "maximum": 255
+    },
+    {
+      "name": "eev_command",
+      "label": "电子膨胀阀命令",
+      "address": 40,
+      "writable": true,
+      "minimum": 0,
+      "maximum": 18
+    },
+    {
+      "name": "eev_step_count",
+      "label": "电子膨胀阀步数",
+      "address": 41,
+      "writable": true,
+      "minimum": 1,
+      "maximum": 4096
+    },
+    {
+      "name": "eev_target_step_set",
+      "label": "电子膨胀阀目标位置设置",
+      "address": 42,
+      "writable": true,
+      "minimum": 0,
+      "maximum": 4096
+    },
+    {
+      "name": "eev_interval_ms_set",
+      "label": "电子膨胀阀速度设置",
+      "address": 43,
+      "unit": "ms/step",
+      "writable": true,
+      "minimum": 2,
+      "maximum": 100
     }
   ]
 }

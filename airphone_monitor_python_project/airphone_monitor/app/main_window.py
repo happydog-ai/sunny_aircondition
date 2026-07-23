@@ -33,6 +33,8 @@ PAGE_INFO = {
     4: ("通信日志", "查看串口通信原始数据的收发日志"),
 }
 
+PAGE_INFO[5] = ("电子膨胀阀测试", "设置 CNF1 步进电机速度、步数和旋转角度")
+
 STYLESHEET = """
 QMainWindow {
     background: #F3F5F7;
@@ -150,6 +152,19 @@ QPushButton#primaryBtn:hover {
 QPushButton#primaryBtn:disabled {
     background: #D1D5DB;
     color: #9CA3AF;
+}
+QPushButton#startBtn {
+    background: #16A34A;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    min-width: 140px;
+    min-height: 34px;
+}
+QPushButton#startBtn:hover {
+    background: #15803D;
 }
 QPushButton#dangerBtn {
     background: #D64545;
@@ -346,6 +361,7 @@ class MainWindow(QMainWindow):
         self.pages.addWidget(self._parameters_page())
         self.pages.addWidget(self._manual_page())
         self.pages.addWidget(self._logs_page())
+        self.pages.addWidget(self._eev_page())
         right_layout.addWidget(self.pages, 1)
 
         main_layout.addWidget(right, 1)
@@ -399,6 +415,13 @@ class MainWindow(QMainWindow):
             btn.clicked.connect(lambda _checked, i=idx: self._switch_page(i))
             self.nav_buttons.append(btn)
             layout.addWidget(btn)
+
+        btn = QPushButton("↔  膨胀阀测试")
+        btn.setObjectName("navBtn")
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.clicked.connect(lambda _checked: self._switch_page(5))
+        self.nav_buttons.append(btn)
+        layout.addWidget(btn)
 
         layout.addStretch()
         return sidebar
@@ -814,6 +837,136 @@ class MainWindow(QMainWindow):
         wrap.addStretch()
         return page
 
+    def _eev_page(self) -> QWidget:
+        page = QWidget()
+        wrap = QVBoxLayout(page)
+        wrap.setContentsMargins(0, 0, 0, 0)
+        wrap.setSpacing(12)
+
+        status_card = QFrame()
+        status_card.setObjectName("card")
+        status_layout = QVBoxLayout(status_card)
+        status_layout.setContentsMargins(20, 16, 20, 16)
+        status_layout.setSpacing(12)
+
+        title = QLabel("电子膨胀阀状态")
+        title.setStyleSheet("font-size:16px;font-weight:700;color:#1F2937;")
+        status_layout.addWidget(title)
+
+        status_grid = QGridLayout()
+        status_grid.setHorizontalSpacing(32)
+        status_grid.setVerticalSpacing(12)
+        self.eev_status_label = QLabel("状态：--")
+        self.eev_step_label = QLabel("当前位置：--")
+        self.eev_target_label = QLabel("目标位置：--")
+        self.eev_speed_label = QLabel("当前速度：--")
+        for lbl in (
+            self.eev_status_label,
+            self.eev_step_label,
+            self.eev_target_label,
+            self.eev_speed_label,
+        ):
+            lbl.setStyleSheet("font-size:14px;color:#374151;")
+        status_grid.addWidget(self.eev_status_label, 0, 0)
+        status_grid.addWidget(self.eev_step_label, 0, 1)
+        status_grid.addWidget(self.eev_target_label, 1, 0)
+        status_grid.addWidget(self.eev_speed_label, 1, 1)
+        status_layout.addLayout(status_grid)
+        wrap.addWidget(status_card)
+
+        control_card = QFrame()
+        control_card.setObjectName("card")
+        control_layout = QVBoxLayout(control_card)
+        control_layout.setContentsMargins(20, 16, 20, 16)
+        control_layout.setSpacing(16)
+
+        control_title = QLabel("电子膨胀阀控制测试（CNF1）")
+        control_title.setStyleSheet("font-size:16px;font-weight:700;color:#1F2937;")
+        control_layout.addWidget(control_title)
+
+        speed_row = QHBoxLayout()
+        speed_row.setSpacing(12)
+        self.eev_interval_spin = QSpinBox()
+        self.eev_interval_spin.setRange(2, 100)
+        self.eev_interval_spin.setValue(15)
+        self.eev_interval_spin.setSuffix(" ms/step")
+        self.eev_interval_spin.setMinimumWidth(160)
+        self.eev_interval_spin.setKeyboardTracking(False)
+        self.eev_apply_speed_btn = QPushButton("应用速度")
+        self.eev_apply_speed_btn.setObjectName("writeBtn")
+        self.eev_apply_speed_btn.clicked.connect(self._eev_apply_speed)
+        speed_row.addWidget(QLabel("旋转速度"))
+        speed_row.addWidget(self.eev_interval_spin)
+        speed_row.addWidget(self.eev_apply_speed_btn)
+        speed_row.addStretch()
+        control_layout.addLayout(speed_row)
+
+        steps_group = QFrame()
+        steps_group.setObjectName("card")
+        steps_layout = QHBoxLayout(steps_group)
+        steps_layout.setContentsMargins(16, 12, 16, 12)
+        steps_layout.setSpacing(12)
+        self.eev_steps_spin = QSpinBox()
+        self.eev_steps_spin.setRange(1, 4096)
+        self.eev_steps_spin.setValue(64)
+        self.eev_steps_spin.setSuffix(" step")
+        self.eev_steps_spin.setMinimumWidth(160)
+        self.eev_steps_spin.setKeyboardTracking(False)
+        self.eev_open_steps_btn = QPushButton("开始顺时针")
+        self.eev_close_steps_btn = QPushButton("开始逆时针")
+        self.eev_open_steps_btn.setObjectName("startBtn")
+        self.eev_close_steps_btn.setObjectName("startBtn")
+        self.eev_open_steps_btn.clicked.connect(lambda: self._eev_move_steps(2))
+        self.eev_close_steps_btn.clicked.connect(lambda: self._eev_move_steps(1))
+        steps_layout.addWidget(QLabel("按步数旋转"))
+        steps_layout.addWidget(self.eev_steps_spin)
+        steps_layout.addWidget(self.eev_open_steps_btn)
+        steps_layout.addWidget(self.eev_close_steps_btn)
+        steps_layout.addStretch()
+        control_layout.addWidget(steps_group)
+
+        angle_group = QFrame()
+        angle_group.setObjectName("card")
+        angle_layout = QHBoxLayout(angle_group)
+        angle_layout.setContentsMargins(16, 12, 16, 12)
+        angle_layout.setSpacing(12)
+        self.eev_angle_spin = QDoubleSpinBox()
+        self.eev_angle_spin.setDecimals(1)
+        self.eev_angle_spin.setRange(0.1, 360.0)
+        self.eev_angle_spin.setSingleStep(5.0)
+        self.eev_angle_spin.setValue(90.0)
+        self.eev_angle_spin.setSuffix(" °")
+        self.eev_angle_spin.setMinimumWidth(160)
+        self.eev_angle_spin.setKeyboardTracking(False)
+        self.eev_open_angle_btn = QPushButton("开始顺时针")
+        self.eev_close_angle_btn = QPushButton("开始逆时针")
+        self.eev_open_angle_btn.setObjectName("startBtn")
+        self.eev_close_angle_btn.setObjectName("startBtn")
+        self.eev_open_angle_btn.clicked.connect(lambda: self._eev_move_angle(2))
+        self.eev_close_angle_btn.clicked.connect(lambda: self._eev_move_angle(1))
+        angle_layout.addWidget(QLabel("按角度旋转"))
+        angle_layout.addWidget(self.eev_angle_spin)
+        angle_layout.addWidget(self.eev_open_angle_btn)
+        angle_layout.addWidget(self.eev_close_angle_btn)
+        angle_layout.addStretch()
+        control_layout.addWidget(angle_group)
+
+        stop_row = QHBoxLayout()
+        self.eev_stop_btn = QPushButton("停止并关闭全部相位")
+        self.eev_stop_btn.setObjectName("dangerBtn")
+        self.eev_stop_btn.clicked.connect(self._eev_stop)
+        stop_row.addWidget(self.eev_stop_btn)
+        stop_row.addStretch()
+        control_layout.addLayout(stop_row)
+
+        hint = QLabel("角度换算：按 24BYJ48 常用 4096 半步/输出轴一圈计算。调试前请确认 CNF1 电源与电机额定电压匹配。")
+        hint.setStyleSheet("font-size:12px;color:#9CA3AF;")
+        control_layout.addWidget(hint)
+
+        wrap.addWidget(control_card)
+        wrap.addStretch()
+        return page
+
     def _parameters_page(self) -> QWidget:
         page = QWidget()
         wrap = QVBoxLayout(page)
@@ -1196,6 +1349,14 @@ class MainWindow(QMainWindow):
         if "hp_fault_code" in state:
             self._update_high_pressure_panel(state)
 
+        if (
+            "eev_current_step" in state
+            or "eev_busy" in state
+            or "eev_target_step" in state
+            or "eev_interval_ms" in state
+        ):
+            self._update_eev_panel(state)
+
         if "K0" in state:
             hp_active = bool(
                 int(
@@ -1435,6 +1596,75 @@ class MainWindow(QMainWindow):
 
         self.hp_lock_label.setText(f"锁机：{'是' if locked else '否'}")
         self.hp_count_label.setText(f"次数：{count}/3")
+
+    def _update_eev_panel(self, state: dict) -> None:
+        current = int(self.last_state.get("eev_current_step", 0))
+        busy = int(self.last_state.get("eev_busy", 0))
+        target = int(self.last_state.get("eev_target_step", 0))
+        interval = int(self.last_state.get("eev_interval_ms", 0))
+
+        if busy:
+            self.eev_status_label.setText("状态：运行中")
+            self.eev_status_label.setStyleSheet("font-size:12px;color:#D97706;font-weight:bold;")
+        else:
+            self.eev_status_label.setText("状态：停止")
+            self.eev_status_label.setStyleSheet("font-size:12px;color:#22A06B;")
+
+        self.eev_step_label.setText(f"当前位置：{current} step")
+        self.eev_target_label.setText(f"目标位置：{target} step")
+        self.eev_speed_label.setText(f"当前速度：{interval} ms/step")
+
+        if (
+            "eev_interval_ms" in state
+            and interval > 0
+            and not self.eev_interval_spin.hasFocus()
+        ):
+            self.eev_interval_spin.blockSignals(True)
+            self.eev_interval_spin.setValue(max(2, min(100, interval)))
+            self.eev_interval_spin.blockSignals(False)
+
+    def _eev_apply_speed(self) -> None:
+        if not self._require_connected():
+            return
+        interval = self.eev_interval_spin.value()
+        self.worker.submit("write_register", address=0x002B, value=interval)
+        self.eev_speed_label.setText(f"当前速度：{interval} ms/step")
+        self.statusBar().showMessage(f"已发送膨胀阀速度：{interval} ms/step", 3000)
+
+    def _eev_angle_to_steps(self) -> int:
+        steps = int(round(self.eev_angle_spin.value() * 4096.0 / 360.0))
+        return max(1, min(4096, steps))
+
+    def _eev_send_move(self, command: int, steps: int) -> None:
+        if not self._require_connected():
+            return
+        interval = self.eev_interval_spin.value()
+        self.worker.submit("write_register", address=0x002B, value=interval)
+        self.worker.submit("write_register", address=0x0029, value=steps)
+        self.worker.submit("write_register", address=0x0028, value=command)
+        direction = "逆时针" if command == 1 else "顺时针"
+        self.eev_status_label.setText(f"状态：已发送{direction} {steps} step")
+        self.eev_status_label.setStyleSheet("font-size:12px;color:#2563EB;font-weight:bold;")
+        self.statusBar().showMessage(
+            f"已发送膨胀阀{direction}：{steps} step，速度 {interval} ms/step",
+            4000,
+        )
+
+    def _eev_move_steps(self, command: int) -> None:
+        self._eev_send_move(command, self.eev_steps_spin.value())
+
+    def _eev_move_angle(self, command: int) -> None:
+        steps = self._eev_angle_to_steps()
+        self.eev_steps_spin.setValue(steps)
+        self._eev_send_move(command, steps)
+
+    def _eev_stop(self) -> None:
+        if not self._require_connected():
+            return
+        self.worker.submit("write_register", address=0x0028, value=18)
+        self.eev_status_label.setText("状态：已发送停止并全关")
+        self.eev_status_label.setStyleSheet("font-size:12px;color:#D64545;font-weight:bold;")
+        self.statusBar().showMessage("已发送膨胀阀停止并关闭全部相位", 4000)
 
     def _handle_aa55_result(self, name: str, result: dict) -> None:
         success = result["success"]
