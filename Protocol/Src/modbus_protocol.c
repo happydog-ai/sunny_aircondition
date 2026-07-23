@@ -7,6 +7,7 @@
 #include "four_way_valve.h"
 #include "driver_board_comm.h"
 #include "temperature_sensor.h"
+#include "eev_control.h"
 
 /*
  * Modbus RTU version.
@@ -89,9 +90,26 @@
 #define MODBUS_IR_TH1_RESISTANCE_HI     (0x0063U)
 #define MODBUS_IR_TH1_TEMP_0P1C         (0x0064U)
 #define MODBUS_IR_TH1_STATUS            (0x0065U)
-#define MODBUS_IR_MAX                   (0x0065U)
+#define MODBUS_IR_EEV_CURRENT_STEP      (0x0070U)
+#define MODBUS_IR_EEV_BUSY              (0x0071U)
+#define MODBUS_IR_EEV_TARGET_STEP       (0x0072U)
+#define MODBUS_IR_EEV_INTERVAL_MS       (0x0073U)
+#define MODBUS_IR_MAX                   (0x0073U)
 
 #define MODBUS_CONFIG_REG_SYSTEM_ENABLE (0x0000U)
+#define MODBUS_HR_EEV_COMMAND           (0x0028U)
+#define MODBUS_HR_EEV_STEP_COUNT        (0x0029U)
+#define MODBUS_HR_EEV_TARGET_STEP       (0x002AU)
+#define MODBUS_HR_EEV_INTERVAL_MS       (0x002BU)
+
+#define MODBUS_EEV_CMD_NONE             (0U)
+#define MODBUS_EEV_CMD_OPEN_STEPS       (1U)
+#define MODBUS_EEV_CMD_CLOSE_STEPS      (2U)
+#define MODBUS_EEV_CMD_STOP             (3U)
+#define MODBUS_EEV_CMD_MOVE_TO          (4U)
+#define MODBUS_EEV_CMD_HOLD_PHASE_BASE  (10U)
+#define MODBUS_EEV_CMD_ALL_OFF          (18U)
+#define MODBUS_EEV_DEFAULT_STEPS        (64U)
 
 #define MODBUS_DIAG_RETURN_QUERY_DATA   (0x0000U)
 
@@ -100,6 +118,8 @@ static uint16_t g_modbus_rx_length;
 static uint16_t g_modbus_rx_expected_length;
 static volatile uint8_t g_modbus_frame_timeout;
 static uint8_t g_modbus_coils;
+static uint16_t g_modbus_eev_step_count;
+static uint16_t g_modbus_eev_target_step;
 
 volatile uint8_t g_modbus_debug_rx_frame[MODBUS_RX_BUFFER_SIZE];
 volatile uint16_t g_modbus_debug_rx_length;
@@ -128,6 +148,8 @@ static uint16_t ModbusProtocol_ReadU16(uint16_t offset);
 static void ModbusProtocol_WriteU16(uint8_t *buffer, uint16_t offset, uint16_t value);
 static uint16_t ModbusProtocol_GetHoldingRegister(uint16_t address);
 static uint16_t ModbusProtocol_GetInputRegister(uint16_t address);
+static uint8_t ModbusProtocol_IsEevHoldingRegister(uint16_t address);
+static uint8_t ModbusProtocol_WriteEevHoldingRegister(uint16_t address, uint16_t value);
 static uint8_t ModbusProtocol_GetDiscreteInput(uint16_t address);
 static uint8_t ModbusProtocol_GetLedStatus(void);
 static void ModbusProtocol_SetLedStatus(uint8_t status);
@@ -145,6 +167,8 @@ void ModbusProtocol_Init(void)
         g_modbus_coils |= (uint8_t)(1U << MODBUS_COIL_SYSTEM_ENABLE);
     }
     ModbusProtocol_ApplyLedOutput(ModbusProtocol_GetLedStatus());
+    g_modbus_eev_step_count = MODBUS_EEV_DEFAULT_STEPS;
+    g_modbus_eev_target_step = 0U;
     ModbusProtocol_ResetRx();
 }
 
@@ -582,7 +606,8 @@ static void ModbusProtocol_HandleWriteSingleRegister(void)
     register_address = ModbusProtocol_ReadU16(2U);
     value = ModbusProtocol_ReadU16(4U);
 
-    if (!AppConfig_ValidateRegister(register_address, value))
+    if (!ModbusProtocol_IsEevHoldingRegister(register_address) &&
+        !AppConfig_ValidateRegister(register_address, value))
     {
         ModbusProtocol_SendException(MODBUS_FUNC_WRITE_SINGLE_REG, MODBUS_EX_ILLEGAL_DATA_VALUE);
         return;
@@ -594,7 +619,18 @@ static void ModbusProtocol_HandleWriteSingleRegister(void)
     }
     else
     {
-        AppConfig_SetRegister(register_address, value);
+        if (ModbusProtocol_IsEevHoldingRegister(register_address))
+        {
+            if (ModbusProtocol_WriteEevHoldingRegister(register_address, value) == 0U)
+            {
+                ModbusProtocol_SendException(MODBUS_FUNC_WRITE_SINGLE_REG, MODBUS_EX_ILLEGAL_DATA_VALUE);
+                return;
+            }
+        }
+        else
+        {
+            AppConfig_SetRegister(register_address, value);
+        }
     }
 
     ModbusProtocol_SendFrame(g_modbus_rx_frame, 6U);
@@ -631,7 +667,8 @@ static void ModbusProtocol_HandleWriteMultipleRegisters(void)
         uint16_t value = (uint16_t)((uint16_t)g_modbus_rx_frame[7U + i * 2U] << 8U) |
                          (uint16_t)g_modbus_rx_frame[8U + i * 2U];
 
-        if (!AppConfig_ValidateRegister(reg_addr, value))
+        if (!ModbusProtocol_IsEevHoldingRegister(reg_addr) &&
+            !AppConfig_ValidateRegister(reg_addr, value))
         {
             ModbusProtocol_SendException(MODBUS_FUNC_WRITE_MULTIPLE_REGS, MODBUS_EX_ILLEGAL_DATA_VALUE);
             return;
@@ -650,7 +687,18 @@ static void ModbusProtocol_HandleWriteMultipleRegisters(void)
         }
         else
         {
-            AppConfig_SetRegister(reg_addr, value);
+            if (ModbusProtocol_IsEevHoldingRegister(reg_addr))
+            {
+                if (ModbusProtocol_WriteEevHoldingRegister(reg_addr, value) == 0U)
+                {
+                    ModbusProtocol_SendException(MODBUS_FUNC_WRITE_MULTIPLE_REGS, MODBUS_EX_ILLEGAL_DATA_VALUE);
+                    return;
+                }
+            }
+            else
+            {
+                AppConfig_SetRegister(reg_addr, value);
+            }
         }
     }
 
@@ -786,6 +834,18 @@ static uint16_t ModbusProtocol_GetHoldingRegister(uint16_t address)
         case MODBUS_IR_FOUR_WAY_STATE:
             return (uint16_t)FourWayValve_GetState();
 
+        case MODBUS_HR_EEV_COMMAND:
+            return MODBUS_EEV_CMD_NONE;
+
+        case MODBUS_HR_EEV_STEP_COUNT:
+            return g_modbus_eev_step_count;
+
+        case MODBUS_HR_EEV_TARGET_STEP:
+            return g_modbus_eev_target_step;
+
+        case MODBUS_HR_EEV_INTERVAL_MS:
+            return EEV_GetStepIntervalMs();
+
         default:
             break;
     }
@@ -861,13 +921,118 @@ static uint16_t ModbusProtocol_GetInputRegister(uint16_t address)
                     return (uint16_t)((th1.resistance_ohm >> 16U) & 0xFFFFUL);
                 case MODBUS_IR_TH1_TEMP_0P1C:
                     return (uint16_t)th1.temperature_0p1c;
-                case MODBUS_IR_TH1_STATUS:
-                    return (uint16_t)th1.status;
+        case MODBUS_IR_TH1_STATUS:
+            return (uint16_t)th1.status;
                 default:
                     break;
             }
         }
         break;
+
+        case MODBUS_IR_EEV_CURRENT_STEP:
+            return EEV_GetCurrentStep();
+
+        case MODBUS_IR_EEV_BUSY:
+            return (uint16_t)EEV_IsBusy();
+
+        case MODBUS_IR_EEV_TARGET_STEP:
+            return g_modbus_eev_target_step;
+
+        case MODBUS_IR_EEV_INTERVAL_MS:
+            return EEV_GetStepIntervalMs();
+
+        default:
+            break;
+    }
+
+    return 0U;
+}
+
+static uint8_t ModbusProtocol_IsEevHoldingRegister(uint16_t address)
+{
+    return ((address == MODBUS_HR_EEV_COMMAND) ||
+            (address == MODBUS_HR_EEV_STEP_COUNT) ||
+            (address == MODBUS_HR_EEV_TARGET_STEP) ||
+            (address == MODBUS_HR_EEV_INTERVAL_MS)) ? 1U : 0U;
+}
+
+static uint8_t ModbusProtocol_WriteEevHoldingRegister(uint16_t address, uint16_t value)
+{
+    switch (address)
+    {
+        case MODBUS_HR_EEV_STEP_COUNT:
+            if (value == 0U || value > EEV_MAX_STEPS)
+            {
+                return 0U;
+            }
+            g_modbus_eev_step_count = value;
+            return 1U;
+
+        case MODBUS_HR_EEV_TARGET_STEP:
+            if (value > EEV_MAX_STEPS)
+            {
+                return 0U;
+            }
+            g_modbus_eev_target_step = value;
+            return 1U;
+
+        case MODBUS_HR_EEV_INTERVAL_MS:
+            return EEV_SetStepIntervalMs(value);
+
+        case MODBUS_HR_EEV_COMMAND:
+            if ((value >= MODBUS_EEV_CMD_HOLD_PHASE_BASE) &&
+                (value < (uint16_t)(MODBUS_EEV_CMD_HOLD_PHASE_BASE + 8U)))
+            {
+                return EEV_DebugHoldPhase((uint8_t)(value - MODBUS_EEV_CMD_HOLD_PHASE_BASE));
+            }
+
+            switch (value)
+            {
+                case MODBUS_EEV_CMD_NONE:
+                    return 1U;
+
+                case MODBUS_EEV_CMD_OPEN_STEPS:
+                    EEV_OpenSteps(g_modbus_eev_step_count);
+                    g_modbus_eev_target_step = EEV_GetCurrentStep();
+                    if ((uint16_t)(EEV_MAX_STEPS - g_modbus_eev_target_step) < g_modbus_eev_step_count)
+                    {
+                        g_modbus_eev_target_step = EEV_MAX_STEPS;
+                    }
+                    else
+                    {
+                        g_modbus_eev_target_step = (uint16_t)(g_modbus_eev_target_step + g_modbus_eev_step_count);
+                    }
+                    return 1U;
+
+                case MODBUS_EEV_CMD_CLOSE_STEPS:
+                    EEV_CloseSteps(g_modbus_eev_step_count);
+                    if (EEV_GetCurrentStep() < g_modbus_eev_step_count)
+                    {
+                        g_modbus_eev_target_step = 0U;
+                    }
+                    else
+                    {
+                        g_modbus_eev_target_step = (uint16_t)(EEV_GetCurrentStep() - g_modbus_eev_step_count);
+                    }
+                    return 1U;
+
+                case MODBUS_EEV_CMD_STOP:
+                    EEV_Stop();
+                    g_modbus_eev_target_step = EEV_GetCurrentStep();
+                    return 1U;
+
+                case MODBUS_EEV_CMD_MOVE_TO:
+                    EEV_MoveTo(g_modbus_eev_target_step);
+                    return 1U;
+
+                case MODBUS_EEV_CMD_ALL_OFF:
+                    EEV_Stop();
+                    g_modbus_eev_target_step = EEV_GetCurrentStep();
+                    return 1U;
+
+                default:
+                    return 0U;
+            }
 
         default:
             break;

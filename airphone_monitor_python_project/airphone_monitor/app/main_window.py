@@ -1158,6 +1158,10 @@ class MainWindow(QMainWindow):
                 else:
                     card.set_value(state[name])
 
+        if "ambient_temp" in self.cards:
+            resistance_text = self._format_th1_resistance()
+            self.cards["ambient_temp"].set_detail(resistance_text)
+
         if "device_status" in self.cards and (
             "system_enable" in state or "led" in state
         ):
@@ -1233,6 +1237,25 @@ class MainWindow(QMainWindow):
             self.logger.write(self.last_state)
 
         self._update_dash_status(state)
+
+    def _format_th1_resistance(self) -> str:
+        low = self.last_state.get("th1_resistance_low")
+        high = self.last_state.get("th1_resistance_high", 0)
+        status = self.last_state.get("th1_status")
+
+        try:
+            if status is not None and int(status) != 0:
+                return "NTC电阻：--"
+            if low is None:
+                return ""
+            resistance = (int(high) << 16) | int(low)
+        except (TypeError, ValueError):
+            return ""
+
+        if resistance <= 0 or resistance >= 0x7FFFFFFF:
+            return "NTC电阻：--"
+
+        return f"NTC电阻：{resistance / 1000.0:.2f} kΩ"
 
     def _update_dash_status(self, state: dict) -> None:
         if not hasattr(self, "dash_switch_status") or self.dash_switch_status is None:

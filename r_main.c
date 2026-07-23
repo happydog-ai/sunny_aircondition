@@ -23,7 +23,7 @@
 * Device(s)    : R5F100LG
 * Tool-Chain   : CCRL
 * Description  : This file implements main function.
-* Creation Date: 2026/7/22
+* Creation Date: 2026/7/23
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -47,6 +47,7 @@ Includes
 #include "high_pressure_protection.h"
 #include "four_way_valve.h"
 #include "temperature_sensor.h"
+#include "eev_control.h"
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
 
@@ -92,6 +93,8 @@ void main(void)
         HighPressureProtection_Task();
         FourWayValve_Task();
         Temperature_Task();
+        EEV_Task_1ms();
+        EEV_TestTask();
         R_WDT_Restart();
     }
 
@@ -118,12 +121,14 @@ void R_MAIN_UserInit(void)
      * ?????UART1?RS-485?
      */
     BSP_RS485_Init();
+    EEV_Init();
 
     /*
      * LED????
      */
     TDR00 = APP_SYSTEM_TICK_TDR00_1MS;
     R_TAU0_Channel0_Start();
+    R_TAU0_Channel1_Start();
 
     /*
      * ??CPU????

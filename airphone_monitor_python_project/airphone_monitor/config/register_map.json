@@ -33,16 +33,56 @@
     }
   ],
   "discrete_inputs": [
-    {"name": "K0", "label": "K0 高压/开关", "address": 0},
-    {"name": "K1", "label": "K1", "address": 1},
-    {"name": "K2", "label": "K2", "address": 2},
-    {"name": "K3", "label": "K3", "address": 3},
-    {"name": "K4", "label": "K4", "address": 4},
-    {"name": "K5", "label": "K5", "address": 5},
-    {"name": "K6", "label": "K6", "address": 6},
-    {"name": "K7", "label": "K7", "address": 7},
-    {"name": "K8", "label": "K8", "address": 8},
-    {"name": "K9", "label": "K9", "address": 9}
+    {
+      "name": "K0",
+      "label": "K0 高压/开关",
+      "address": 0
+    },
+    {
+      "name": "K1",
+      "label": "K1",
+      "address": 1
+    },
+    {
+      "name": "K2",
+      "label": "K2",
+      "address": 2
+    },
+    {
+      "name": "K3",
+      "label": "K3",
+      "address": 3
+    },
+    {
+      "name": "K4",
+      "label": "K4",
+      "address": 4
+    },
+    {
+      "name": "K5",
+      "label": "K5",
+      "address": 5
+    },
+    {
+      "name": "K6",
+      "label": "K6",
+      "address": 6
+    },
+    {
+      "name": "K7",
+      "label": "K7",
+      "address": 7
+    },
+    {
+      "name": "K8",
+      "label": "K8",
+      "address": 8
+    },
+    {
+      "name": "K9",
+      "label": "K9",
+      "address": 9
+    }
   ],
   "input_registers": [
     {
@@ -169,6 +209,22 @@
       "name": "compressor_run_elapsed",
       "label": "压缩机运行已持续",
       "address": 93,
+      "minimum": 0,
+      "maximum": 65535
+    },
+    {
+      "name": "th1_resistance_low",
+      "label": "TH1???16?",
+      "address": 98,
+      "writable": false,
+      "minimum": 0,
+      "maximum": 65535
+    },
+    {
+      "name": "th1_resistance_high",
+      "label": "TH1???16?",
+      "address": 99,
+      "writable": false,
       "minimum": 0,
       "maximum": 65535
     },

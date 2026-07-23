@@ -9,7 +9,7 @@ class ValueCard(QFrame):
         self._value_color = value_color
         self.setObjectName("valueCard")
         self.setMinimumSize(150, 100)
-        self.setMaximumHeight(120)
+        self.setMaximumHeight(136)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 14, 16, 14)
@@ -26,8 +26,16 @@ class ValueCard(QFrame):
             f"font-size:26px;font-weight:700;color:{value_color};"
         )
 
+        self.detail_label = QLabel("")
+        self.detail_label.setObjectName("cardDetail")
+        self.detail_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.detail_label.setStyleSheet(
+            "font-size:12px;font-weight:500;color:rgba(107, 114, 128, 150);"
+        )
+
         layout.addWidget(self.title_label)
         layout.addWidget(self.value_label)
+        layout.addWidget(self.detail_label)
 
     def set_value(self, value, color: str | None = None) -> None:
         if value is None:
@@ -41,3 +49,6 @@ class ValueCard(QFrame):
             self.value_label.setStyleSheet(
                 f"font-size:26px;font-weight:700;color:{color};"
             )
+
+    def set_detail(self, text: str | None) -> None:
+        self.detail_label.setText(text or "")
