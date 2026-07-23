@@ -236,8 +236,8 @@
       "scale": 0.1,
       "signed": true,
       "writable": false,
-      "minimum": -30,
-      "maximum": 105
+      "minimum": -40,
+      "maximum": 150
     },
     {
       "name": "th1_status",

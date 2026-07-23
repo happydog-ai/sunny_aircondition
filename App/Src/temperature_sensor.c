@@ -19,34 +19,197 @@ typedef struct {
 } ntc_rt_point_t;
 
 static const ntc_rt_point_t g_mf58_502x_rt_table[] = {
-    {  -300,  69549UL }, /*  -30C */
-    {  -250,  52168UL }, /*  -25C */
-    {  -200,  39579UL }, /*  -20C */
-    {  -150,  30350UL }, /*  -15C */
-    {  -100,  23509UL }, /*  -10C */
-    {   -50,  18385UL }, /*   -5C */
-    {     0,  14218UL }, /*    0C, spec check point: 14217.8ohm */
-    {    50,  11545UL }, /*    5C */
-    {   100,   9263UL }, /*   10C */
-    {   150,   7488UL }, /*   15C */
-    {   200,   6053UL }, /*   20C, spec check point: 6052.6ohm */
-    {   250,   5000UL }, /*   25C, R25 */
-    {   300,   4095UL }, /*   30C, spec check point */
-    {   350,   3427UL }, /*   35C */
-    {   400,   2843UL }, /*   40C, spec check point: 2842.7ohm */
-    {   450,   2406UL }, /*   45C */
-    {   500,   2032UL }, /*   50C, spec check point: 2032.1ohm */
-    {   550,   1725UL }, /*   55C */
-    {   600,   1472UL }, /*   60C */
-    {   650,   1262UL }, /*   65C */
-    {   700,   1087UL }, /*   70C */
-    {   750,    940UL }, /*   75C */
-    {   800,    816UL }, /*   80C */
-    {   850,    694UL }, /*   85C, spec check point: 694.2ohm */
-    {   900,    623UL }, /*   90C */
-    {   950,    547UL }, /*   95C */
-    {  1000,    482UL }, /*  100C */
-    {  1050,    392UL }  /*  105C, spec check point: 392.4ohm */
+    {  -400, 113871UL }, /*  -40C, TH2 Rnom */
+    {  -390, 107186UL }, /*  -39C, TH2 Rnom */
+    {  -380, 100968UL }, /*  -38C, TH2 Rnom */
+    {  -370,  95178UL }, /*  -37C, TH2 Rnom */
+    {  -360,  89778UL }, /*  -36C, TH2 Rnom */
+    {  -350,  84737UL }, /*  -35C, TH2 Rnom */
+    {  -340,  80025UL }, /*  -34C, TH2 Rnom */
+    {  -330,  75617UL }, /*  -33C, TH2 Rnom */
+    {  -320,  71488UL }, /*  -32C, TH2 Rnom */
+    {  -310,  67618UL }, /*  -31C, TH2 Rnom */
+    {  -300,  63986UL }, /*  -30C, TH2 Rnom */
+    {  -290,  60576UL }, /*  -29C, TH2 Rnom */
+    {  -280,  57372UL }, /*  -28C, TH2 Rnom */
+    {  -270,  54359UL }, /*  -27C, TH2 Rnom */
+    {  -260,  51524UL }, /*  -26C, TH2 Rnom */
+    {  -250,  48854UL }, /*  -25C, TH2 Rnom */
+    {  -240,  46339UL }, /*  -24C, TH2 Rnom */
+    {  -230,  43968UL }, /*  -23C, TH2 Rnom */
+    {  -220,  41732UL }, /*  -22C, TH2 Rnom */
+    {  -210,  39622UL }, /*  -21C, TH2 Rnom */
+    {  -200,  37630UL }, /*  -20C, TH2 Rnom */
+    {  -190,  35749UL }, /*  -19C, TH2 Rnom */
+    {  -180,  33972UL }, /*  -18C, TH2 Rnom */
+    {  -170,  32292UL }, /*  -17C, TH2 Rnom */
+    {  -160,  30704UL }, /*  -16C, TH2 Rnom */
+    {  -150,  29202UL }, /*  -15C, TH2 Rnom */
+    {  -140,  27782UL }, /*  -14C, TH2 Rnom */
+    {  -130,  26437UL }, /*  -13C, TH2 Rnom */
+    {  -120,  25164UL }, /*  -12C, TH2 Rnom */
+    {  -110,  23959UL }, /*  -11C, TH2 Rnom */
+    {  -100,  22818UL }, /*  -10C, TH2 Rnom */
+    {   -90,  21737UL }, /*   -9C, TH2 Rnom */
+    {   -80,  20713UL }, /*   -8C, TH2 Rnom */
+    {   -70,  19742UL }, /*   -7C, TH2 Rnom */
+    {   -60,  18822UL }, /*   -6C, TH2 Rnom */
+    {   -50,  17950UL }, /*   -5C, TH2 Rnom */
+    {   -40,  17123UL }, /*   -4C, TH2 Rnom */
+    {   -30,  16338UL }, /*   -3C, TH2 Rnom */
+    {   -20,  15594UL }, /*   -2C, TH2 Rnom */
+    {   -10,  14888UL }, /*   -1C, TH2 Rnom */
+    {     0,  14218UL }, /*    0C, TH2 Rnom */
+    {    10,  13582UL }, /*    1C, TH2 Rnom */
+    {    20,  12978UL }, /*    2C, TH2 Rnom */
+    {    30,  12405UL }, /*    3C, TH2 Rnom */
+    {    40,  11861UL }, /*    4C, TH2 Rnom */
+    {    50,  11344UL }, /*    5C, TH2 Rnom */
+    {    60,  10853UL }, /*    6C, TH2 Rnom */
+    {    70,  10387UL }, /*    7C, TH2 Rnom */
+    {    80,   9944UL }, /*    8C, TH2 Rnom */
+    {    90,   9522UL }, /*    9C, TH2 Rnom */
+    {   100,   9122UL }, /*   10C, TH2 Rnom */
+    {   110,   8742UL }, /*   11C, TH2 Rnom */
+    {   120,   8380UL }, /*   12C, TH2 Rnom */
+    {   130,   8036UL }, /*   13C, TH2 Rnom */
+    {   140,   7708UL }, /*   14C, TH2 Rnom */
+    {   150,   7397UL }, /*   15C, TH2 Rnom */
+    {   160,   7101UL }, /*   16C, TH2 Rnom */
+    {   170,   6819UL }, /*   17C, TH2 Rnom */
+    {   180,   6551UL }, /*   18C, TH2 Rnom */
+    {   190,   6296UL }, /*   19C, TH2 Rnom */
+    {   200,   6053UL }, /*   20C, TH2 Rnom */
+    {   210,   5821UL }, /*   21C, TH2 Rnom */
+    {   220,   5601UL }, /*   22C, TH2 Rnom */
+    {   230,   5391UL }, /*   23C, TH2 Rnom */
+    {   240,   5191UL }, /*   24C, TH2 Rnom */
+    {   250,   5000UL }, /*   25C, TH2 Rnom */
+    {   260,   4799UL }, /*   26C, TH2 Rnom */
+    {   270,   4608UL }, /*   27C, TH2 Rnom */
+    {   280,   4428UL }, /*   28C, TH2 Rnom */
+    {   290,   4257UL }, /*   29C, TH2 Rnom */
+    {   300,   4095UL }, /*   30C, TH2 Rnom */
+    {   310,   3941UL }, /*   31C, TH2 Rnom */
+    {   320,   3794UL }, /*   32C, TH2 Rnom */
+    {   330,   3655UL }, /*   33C, TH2 Rnom */
+    {   340,   3522UL }, /*   34C, TH2 Rnom */
+    {   350,   3396UL }, /*   35C, TH2 Rnom */
+    {   360,   3275UL }, /*   36C, TH2 Rnom */
+    {   370,   3160UL }, /*   37C, TH2 Rnom */
+    {   380,   3049UL }, /*   38C, TH2 Rnom */
+    {   390,   2944UL }, /*   39C, TH2 Rnom */
+    {   400,   2843UL }, /*   40C, TH2 Rnom */
+    {   410,   2746UL }, /*   41C, TH2 Rnom */
+    {   420,   2653UL }, /*   42C, TH2 Rnom */
+    {   430,   2564UL }, /*   43C, TH2 Rnom */
+    {   440,   2479UL }, /*   44C, TH2 Rnom */
+    {   450,   2397UL }, /*   45C, TH2 Rnom */
+    {   460,   2318UL }, /*   46C, TH2 Rnom */
+    {   470,   2242UL }, /*   47C, TH2 Rnom */
+    {   480,   2170UL }, /*   48C, TH2 Rnom */
+    {   490,   2100UL }, /*   49C, TH2 Rnom */
+    {   500,   2032UL }, /*   50C, TH2 Rnom */
+    {   510,   1967UL }, /*   51C, TH2 Rnom */
+    {   520,   1905UL }, /*   52C, TH2 Rnom */
+    {   530,   1844UL }, /*   53C, TH2 Rnom */
+    {   540,   1786UL }, /*   54C, TH2 Rnom */
+    {   550,   1730UL }, /*   55C, TH2 Rnom */
+    {   560,   1676UL }, /*   56C, TH2 Rnom */
+    {   570,   1624UL }, /*   57C, TH2 Rnom */
+    {   580,   1573UL }, /*   58C, TH2 Rnom */
+    {   590,   1525UL }, /*   59C, TH2 Rnom */
+    {   600,   1478UL }, /*   60C, TH2 Rnom */
+    {   610,   1432UL }, /*   61C, TH2 Rnom */
+    {   620,   1388UL }, /*   62C, TH2 Rnom */
+    {   630,   1346UL }, /*   63C, TH2 Rnom */
+    {   640,   1305UL }, /*   64C, TH2 Rnom */
+    {   650,   1266UL }, /*   65C, TH2 Rnom */
+    {   660,   1227UL }, /*   66C, TH2 Rnom */
+    {   670,   1190UL }, /*   67C, TH2 Rnom */
+    {   680,   1154UL }, /*   68C, TH2 Rnom */
+    {   690,   1120UL }, /*   69C, TH2 Rnom */
+    {   700,   1086UL }, /*   70C, TH2 Rnom */
+    {   710,   1054UL }, /*   71C, TH2 Rnom */
+    {   720,   1022UL }, /*   72C, TH2 Rnom */
+    {   730,    992UL }, /*   73C, TH2 Rnom */
+    {   740,    962UL }, /*   74C, TH2 Rnom */
+    {   750,    934UL }, /*   75C, TH2 Rnom */
+    {   760,    906UL }, /*   76C, TH2 Rnom */
+    {   770,    880UL }, /*   77C, TH2 Rnom */
+    {   780,    854UL }, /*   78C, TH2 Rnom */
+    {   790,    829UL }, /*   79C, TH2 Rnom */
+    {   800,    804UL }, /*   80C, TH2 Rnom */
+    {   810,    781UL }, /*   81C, TH2 Rnom */
+    {   820,    758UL }, /*   82C, TH2 Rnom */
+    {   830,    736UL }, /*   83C, TH2 Rnom */
+    {   840,    715UL }, /*   84C, TH2 Rnom */
+    {   850,    694UL }, /*   85C, TH2 Rnom */
+    {   860,    674UL }, /*   86C, TH2 Rnom */
+    {   870,    655UL }, /*   87C, TH2 Rnom */
+    {   880,    636UL }, /*   88C, TH2 Rnom */
+    {   890,    618UL }, /*   89C, TH2 Rnom */
+    {   900,    600UL }, /*   90C, TH2 Rnom */
+    {   910,    583UL }, /*   91C, TH2 Rnom */
+    {   920,    566UL }, /*   92C, TH2 Rnom */
+    {   930,    550UL }, /*   93C, TH2 Rnom */
+    {   940,    535UL }, /*   94C, TH2 Rnom */
+    {   950,    520UL }, /*   95C, TH2 Rnom */
+    {   960,    505UL }, /*   96C, TH2 Rnom */
+    {   970,    491UL }, /*   97C, TH2 Rnom */
+    {   980,    477UL }, /*   98C, TH2 Rnom */
+    {   990,    464UL }, /*   99C, TH2 Rnom */
+    {  1000,    451UL }, /*  100C, TH2 Rnom */
+    {  1010,    439UL }, /*  101C, TH2 Rnom */
+    {  1020,    426UL }, /*  102C, TH2 Rnom */
+    {  1030,    415UL }, /*  103C, TH2 Rnom */
+    {  1040,    403UL }, /*  104C, TH2 Rnom */
+    {  1050,    392UL }, /*  105C, TH2 Rnom */
+    {  1060,    382UL }, /*  106C, TH2 Rnom */
+    {  1070,    371UL }, /*  107C, TH2 Rnom */
+    {  1080,    361UL }, /*  108C, TH2 Rnom */
+    {  1090,    352UL }, /*  109C, TH2 Rnom */
+    {  1100,    342UL }, /*  110C, TH2 Rnom */
+    {  1110,    333UL }, /*  111C, TH2 Rnom */
+    {  1120,    324UL }, /*  112C, TH2 Rnom */
+    {  1130,    316UL }, /*  113C, TH2 Rnom */
+    {  1140,    307UL }, /*  114C, TH2 Rnom */
+    {  1150,    299UL }, /*  115C, TH2 Rnom */
+    {  1160,    291UL }, /*  116C, TH2 Rnom */
+    {  1170,    284UL }, /*  117C, TH2 Rnom */
+    {  1180,    276UL }, /*  118C, TH2 Rnom */
+    {  1190,    269UL }, /*  119C, TH2 Rnom */
+    {  1200,    262UL }, /*  120C, TH2 Rnom */
+    {  1210,    256UL }, /*  121C, TH2 Rnom */
+    {  1220,    249UL }, /*  122C, TH2 Rnom */
+    {  1230,    243UL }, /*  123C, TH2 Rnom */
+    {  1240,    236UL }, /*  124C, TH2 Rnom */
+    {  1250,    231UL }, /*  125C, TH2 Rnom */
+    {  1260,    225UL }, /*  126C, TH2 Rnom */
+    {  1270,    219UL }, /*  127C, TH2 Rnom */
+    {  1280,    214UL }, /*  128C, TH2 Rnom */
+    {  1290,    208UL }, /*  129C, TH2 Rnom */
+    {  1300,    203UL }, /*  130C, TH2 Rnom */
+    {  1310,    198UL }, /*  131C, TH2 Rnom */
+    {  1320,    194UL }, /*  132C, TH2 Rnom */
+    {  1330,    189UL }, /*  133C, TH2 Rnom */
+    {  1340,    184UL }, /*  134C, TH2 Rnom */
+    {  1350,    180UL }, /*  135C, TH2 Rnom */
+    {  1360,    176UL }, /*  136C, TH2 Rnom */
+    {  1370,    172UL }, /*  137C, TH2 Rnom */
+    {  1380,    168UL }, /*  138C, TH2 Rnom */
+    {  1390,    164UL }, /*  139C, TH2 Rnom */
+    {  1400,    160UL }, /*  140C, TH2 Rnom */
+    {  1410,    156UL }, /*  141C, TH2 Rnom */
+    {  1420,    153UL }, /*  142C, TH2 Rnom */
+    {  1430,    149UL }, /*  143C, TH2 Rnom */
+    {  1440,    146UL }, /*  144C, TH2 Rnom */
+    {  1450,    143UL }, /*  145C, TH2 Rnom */
+    {  1460,    140UL }, /*  146C, TH2 Rnom */
+    {  1470,    136UL }, /*  147C, TH2 Rnom */
+    {  1480,    133UL }, /*  148C, TH2 Rnom */
+    {  1490,    130UL }, /*  149C, TH2 Rnom */
+    {  1500,    128UL }  /*  150C, TH2 Rnom */
 };
 
 #define NTC_RT_TABLE_COUNT ((uint8_t)(sizeof(g_mf58_502x_rt_table) / sizeof(g_mf58_502x_rt_table[0])))

@@ -1402,19 +1402,16 @@ class MainWindow(QMainWindow):
     def _format_th1_resistance(self) -> str:
         low = self.last_state.get("th1_resistance_low")
         high = self.last_state.get("th1_resistance_high", 0)
-        status = self.last_state.get("th1_status")
 
         try:
-            if status is not None and int(status) != 0:
-                return "NTC电阻：--"
             if low is None:
                 return ""
             resistance = (int(high) << 16) | int(low)
         except (TypeError, ValueError):
             return ""
 
-        if resistance <= 0 or resistance >= 0x7FFFFFFF:
-            return "NTC电阻：--"
+        if resistance == 0xFFFFFFFF:
+            return "NTC电阻：断路/超大"
 
         return f"NTC电阻：{resistance / 1000.0:.2f} kΩ"
 
